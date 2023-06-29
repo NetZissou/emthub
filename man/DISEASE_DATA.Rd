@@ -5,7 +5,7 @@
 \alias{DISEASE_DATA}
 \title{Processed disease data}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 70 rows and 37 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 70 rows and 39 columns.
 }
 \usage{
 DISEASE_DATA

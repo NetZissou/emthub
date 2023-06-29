@@ -7,8 +7,62 @@
 #' @export
 server <- function(input, output, session) {
 
+  #bslib::bs_themer()
   # Input
+  business_data <-
+    shiny::reactiveValues(
+      filtered = emthub::BUSINESS_LOCATION_DATA
+    )
 
+  updateBusiness <-
+    function () {
+
+      filtered <- emthub::BUSINESS_LOCATION_DATA
+
+      if (!rlang::is_empty(input$filter_ct)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$`Census Tract` %in% input$filter_ct
+          )
+      }
+
+      if (!rlang::is_empty(input$filter_zip)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$`Zip Code` %in% input$filter_zip
+          )
+      }
+
+      if (!rlang::is_empty(input$filter_city)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$City %in% input$filter_city
+          )
+      }
+
+      if (!rlang::is_empty(input$filter_type)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$Business_Type %in% input$filter_type
+          )
+      }
+
+      business_data$filtered <- filtered
+    }
+
+  shiny::observeEvent(input$apply_filter_business,{
+
+    updateBusiness()
+
+  })
 
   # Weight Score
   get_tier_score <-
@@ -268,41 +322,41 @@ server <- function(input, output, session) {
     leaflet::addTiles() %>%
       leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
 
-    leaflet::addPolygons(
-      data = SF_DISEASE_DATA,
-      group = "Disease Outcomes Rank Score",
-      stroke = TRUE,
-      color = ~pal_scaled_sum_rank(scaled_rank_sum),
-      weight = 1,
-      #opacity = 0.8,
-      dashArray = "3",
-      fillOpacity = 0.8,
-      #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+      leaflet::addPolygons(
+        data = SF_DISEASE_DATA,
+        group = "Disease Outcomes Rank Score",
+        stroke = TRUE,
+        color = ~pal_scaled_sum_rank(scaled_rank_sum),
+        weight = 1,
+        #opacity = 0.8,
+        dashArray = "3",
+        fillOpacity = 0.8,
+        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
-      label = ~ paste0(
-        "<b>", GEOID, "</b>", "</br>", round(scaled_rank_sum, 4)
-      ) %>% lapply(htmltools::HTML),
+        label = ~ paste0(
+          "<b>", GEOID, "</b>", "</br>", round(scaled_rank_sum, 4)
+        ) %>% lapply(htmltools::HTML),
 
-      labelOptions = leaflet::labelOptions(
-        style = list(
-          "font-weight" = "normal",
-          padding = "3px 8px"
+        labelOptions = leaflet::labelOptions(
+          style = list(
+            "font-weight" = "normal",
+            padding = "3px 8px"
+          ),
+          textsize = "15px",
+          direction = "auto"
         ),
-        textsize = "15px",
-        direction = "auto"
-      ),
 
-      highlight = leaflet::highlightOptions(
-        weight = 3,
-        fillOpacity = 0.1,
-        color = "black",
-        dashArray = "",
-        opacity = 0.5,
-        bringToFront = TRUE,
-        sendToBack = TRUE
-      ),
-      layerId = ~GEOID
-    ) %>%
+        highlight = leaflet::highlightOptions(
+          weight = 3,
+          fillOpacity = 0.1,
+          color = "black",
+          dashArray = "",
+          opacity = 0.5,
+          bringToFront = TRUE,
+          sendToBack = TRUE
+        ),
+        layerId = ~GEOID
+      ) %>%
 
       leaflet::addPolygons(
         data = SF_DISEASE_DATA,
@@ -403,6 +457,7 @@ server <- function(input, output, session) {
           "Poverty Rate"
         ),
         overlayGroups = c(
+          "Business Location",
           "Low income & Low food access (1-10 miles)",
           "Low income & Low food access (half-10 miles)",
           "Low income & Low food access (1-20 miles)"
@@ -411,6 +466,7 @@ server <- function(input, output, session) {
       ) %>%
       leaflet::hideGroup(
         c(
+          #"Business Location",
           "Low income & Low food access (1-10 miles)",
           "Low income & Low food access (half-10 miles)",
           "Low income & Low food access (1-20 miles)"
@@ -467,6 +523,74 @@ server <- function(input, output, session) {
         )
       )
     }
+  })
+
+  output$business_table <- reactable::renderReactable({
+
+    business_data$filtered %>%
+      dplyr::select(
+        .data$`Census Tract`,
+        `Type` = .data$Business_Type,
+        .data$Name,
+        .data$Address,
+        .data$City,
+        `Zip` = .data$`Zip Code`
+      ) %>%
+      reactable::reactable(
+        # Table Format
+        filterable = TRUE,
+        outlined = TRUE,
+        # Selection
+        selection = "multiple", onClick = "select",
+        highlight = TRUE,
+        theme = reactable::reactableTheme(
+          rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+        ),
+        # Table Size
+        defaultPageSize = 5, minRows = 5
+      )
+  })
+
+  selected_business_index <- shiny::reactive(reactable::getReactableState("business_table", "selected"))
+  selected_business <- shiny::reactiveValues(value = NULL)
+  shiny::observe({
+
+    if (!is.null(selected_business_index())) {
+
+      selected_business$value <-
+        business_data$filtered[selected_business_index(),]
+
+
+    } else {
+      selected_business$value <- NULL
+    }
+
+
+    if (!rlang::is_empty(selected_business$value)) {
+
+      leaflet::leafletProxy("index_map") %>%
+        leaflet::clearGroup("Business Location") %>%
+        leaflet::addMarkers(
+          data = selected_business$value,
+          group = "Business Location",
+          lng = ~Longitude, lat = ~Latitude,
+          popup = ~popup,
+          labelOptions = leaflet::labelOptions(
+            style = list(
+              "font-size" = "15px",
+              "font-style" = "bold",
+              "border-color" = "rgba(0,0,0,0.5)"
+            )
+          )
+        )
+
+    } else {
+
+      leaflet::leafletProxy("index_map") %>%
+        leaflet::clearGroup("Business Location")
+    }
+
+    #print(selected_business$value)
   })
 
   shiny::observe({

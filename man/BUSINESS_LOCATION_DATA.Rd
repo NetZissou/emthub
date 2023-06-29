@@ -5,7 +5,7 @@
 \alias{BUSINESS_LOCATION_DATA}
 \title{BUSINESS LOCATION DATA}
 \format{
-An object of class \code{spec_tbl_df} (inherits from \code{tbl_df}, \code{tbl}, \code{data.frame}) with 1370 rows and 10 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 1370 rows and 11 columns.
 }
 \usage{
 BUSINESS_LOCATION_DATA
