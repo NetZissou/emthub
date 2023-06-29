@@ -90,7 +90,7 @@ ui <- function() {
                     shiny::selectInput(
                       inputId = "filter_type",
                       label = "Type",
-                      choices = emthub::ILTER_TYPE_CHOICES,
+                      choices = emthub::FILTER_TYPE_CHOICES,
                       multiple = TRUE
                     ),
                   ),
