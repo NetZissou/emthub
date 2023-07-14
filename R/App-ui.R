@@ -103,6 +103,35 @@ ui <- function() {
                   shiny::tags$hr(),
                   shiny::helpText("Toggle to add business to the map"),
                   reactable::reactableOutput("business_table")
+                ),
+
+                bslib::nav_panel(
+                  "Accessibility",
+
+                  bslib::card(
+                    height = 500,
+
+                    shiny::selectInput(
+                      inputId = "filter_acc_type",
+                      label = "Business Type",
+                      choices = emthub::ACC_BUSINESS_TYPE,
+                      multiple = FALSE
+                    ),
+
+                    shiny::selectInput(
+                      inputId = "filter_transportation_method",
+                      label = "Transportation Methods",
+                      choices = emthub::ACC_TRANSPORTATION_METHODS,
+                      multiple = FALSE
+                    ),
+
+                    shiny::actionButton(
+                      inputId = "apply_filter_acc",
+                      label = "Apply Filters"
+                    )
+                  )
+
+
                 )
               )
             ),

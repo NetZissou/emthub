@@ -14,6 +14,95 @@ server <- function(input, output, session) {
       filtered = emthub::BUSINESS_LOCATION_DATA
     )
 
+  acc_data <-
+    shiny::reactiveValues(
+      value = NULL,
+      pal = NULL
+    )
+
+  updateAcc <-
+    function() {
+
+      acc_data_filtered <- emthub::ACCESSIBILITY_DATA
+
+      if (!rlang::is_empty(input$filter_acc_type)) {
+
+        acc_data_filtered <-
+          acc_data_filtered %>%
+          dplyr::filter(.data$Business_type == input$filter_acc_type)
+      }
+
+      if (!rlang::is_empty(input$filter_transportation_method)) {
+
+        acc_data_filtered <-
+          acc_data_filtered %>%
+          dplyr::select(
+            .data$censustract,
+            .data$Business_type,
+            value = .data[[input$filter_transportation_method]]
+          )
+      }
+
+      acc_data$value <- acc_data_filtered
+      acc_data$pal <-
+        leaflet::colorNumeric(
+          palette = "Reds",
+          domain = acc_data_filtered$value,
+          na.color = "#808080"
+        )
+
+
+      leaflet::leafletProxy("index_map") %>%
+        leaflet::clearGroup(group = "Accessibility") %>%
+        leaflet::removeControl(layerId = "acc_legend") %>%
+        leaflet::addPolygons(
+          data = emthub::SF_CENSUS_TRACT %>% dplyr::left_join(acc_data$value, by = c("GEOID" = "censustract")),
+          group = "Accessibility",
+          stroke = TRUE,
+          color = ~acc_data$pal(value),
+          weight = 1,
+          #opacity = 0.8,
+          dashArray = "3",
+          fillOpacity = 0.8,
+          #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+
+          label = ~ paste0(
+            "<b>", GEOID, "</b>", "</br>", value
+          ) %>% lapply(htmltools::HTML),
+
+          labelOptions = leaflet::labelOptions(
+            style = list(
+              "font-weight" = "normal",
+              padding = "3px 8px"
+            ),
+            textsize = "15px",
+            direction = "auto"
+          ),
+
+          highlight = leaflet::highlightOptions(
+            weight = 3,
+            fillOpacity = 0.1,
+            color = "black",
+            dashArray = "",
+            opacity = 0.5,
+            bringToFront = TRUE,
+            sendToBack = TRUE
+          ),
+
+          # TODO: Process Layer ID
+          layerId = ~paste0("acc_", GEOID)
+        ) %>%
+        leaflet::addLegend(
+          "bottomleft",
+          group = "Accessibility",
+          layerId = "acc_legend",
+          data = acc_data$value,
+          pal = acc_data$pal, values = ~value,
+          title = "Accessibility\nScore",
+          opacity = 1
+        )
+    }
+
   updateBusiness <-
     function () {
 
@@ -61,6 +150,12 @@ server <- function(input, output, session) {
   shiny::observeEvent(input$apply_filter_business,{
 
     updateBusiness()
+
+  })
+
+  shiny::observeEvent(input$apply_filter_acc, {
+
+    updateAcc()
 
   })
 
@@ -309,6 +404,8 @@ server <- function(input, output, session) {
   SF_DISEASE_DATA <-
     emthub::SF_CENSUS_TRACT %>% dplyr::left_join(emthub::DISEASE_DATA, by = c("GEOID" = "censustract"))
 
+
+
   output$index_map <- leaflet::renderLeaflet({
 
     leaflet::leaflet(
@@ -454,7 +551,8 @@ server <- function(input, output, session) {
         baseGroups = c(
           "Disease Outcomes Rank Score",
           "Disease Outcomes Weighted Rank Score",
-          "Poverty Rate"
+          "Poverty Rate",
+          "Accessibility"
         ),
         overlayGroups = c(
           "Business Location",
