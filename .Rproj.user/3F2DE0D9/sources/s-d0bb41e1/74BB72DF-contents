@@ -1,0 +1,17 @@
+import requests
+
+def download_pdf(url, save_path):
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(save_path, 'wb') as file:
+            file.write(response.content)
+        print("PDF file downloaded successfully!")
+    else:
+        print("Failed to download the PDF file.")
+
+# Provide the URL of the PDF file and the local directory to save it
+pdf_url = "http://ems.ohio.gov/static/links/EMSNaloxoneAdminByZipCode2023.pdf"
+save_path = "file.pdf"
+
+# Call the function to download the PDF file
+download_pdf(pdf_url, save_path)

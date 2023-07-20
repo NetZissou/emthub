@@ -1,0 +1,76 @@
+add_rstudio_files <- function(
+  pkg,
+  open,
+  service = c(
+    "RStudio Connect",
+    "Shiny Server",
+    "ShinyApps.io"
+  )
+) {
+  service <- match.arg(service)
+  where <- fs_path(pkg, "app.R")
+  
+  rlang::check_installed(
+    "pkgload",
+    reason = "to deploy on RStudio products."
+  )
+  
+  disable_autoload(
+    pkg = pkg
+  )
+  
+  if (!fs_file_exists(where)) {
+    fs_file_create(where)
+    
+    write_there <- function(..., here = where) {
+      write(..., here, append = TRUE)
+    }
+    
+    usethis_use_build_ignore(basename(where))
+    usethis_use_build_ignore("rsconnect")
+    write_there("# Launch the ShinyApp (Do not remove this comment)")
+    write_there("# To deploy, run: rsconnect::deployApp()")
+    write_there("# Or use the blue button on top of this file")
+    write_there("")
+    write_there("pkgload::load_all(export_all = FALSE,helpers = FALSE,attach_testthat = FALSE)")
+    write_there("options( \"golem.app.prod\" = TRUE)")
+    write_there(
+      sprintf(
+        "%s::run_app() # add parameters here (if any)",
+        get_golem_name()
+      )
+    )
+    
+    # We add {pkgload} as a dep because it's required to deploy on Connect & stuff
+    usethis_use_package("pkgload")
+    
+    cat_created(where)
+    cli_cat_line("To deploy, run:")
+    cli_cat_bullet(crayon_darkgrey("rsconnect::deployApp()\n"))
+    cat_red_bullet(
+      sprintf(
+        "Note that you'll need to upload the whole package to %s",
+        service
+      )
+    )
+    
+    open_or_go_to(where, open)
+  } else {
+    file_already_there_dance(
+      where = where,
+      open_file = open
+    )
+  }
+}
+
+
+add_shinyappsio_file <- function(
+  pkg = get_golem_wd(),
+  open = TRUE
+) {
+  add_rstudio_files(
+    pkg = pkg,
+    open = open,
+    service = "ShinyApps.io"
+  )
+}

@@ -1,0 +1,55 @@
+library(shiny)
+library(sortable)
+library(bslib)
+library(shinyjs)
+
+test_ui <- bslib::page_fillable(
+  useShinyjs(),
+  sortable::bucket_list(
+    header = "Disease Outcomes of Interest",
+    group_name = "bucket_list_group",
+    orientation = "horizontal",
+    
+    sortable::add_rank_list(
+      text = "Outcomes",
+      labels = emthub::DISEASE_OUTCOMES,
+      input_id = "outcomes"
+    ),
+    sortable::add_rank_list(
+      text = "Tier 1",
+      labels = NULL,
+      input_id = "rank_list_1"
+    ),
+    sortable::add_rank_list(
+      text = "Tier 2",
+      labels = NULL,
+      input_id = "rank_list_2"
+    ),
+    sortable::add_rank_list(
+      text = "Tier 3",
+      labels = NULL,
+      input_id = "rank_list_3"
+    ),
+    options = sortable::sortable_options(multiDrag = TRUE)
+  ),
+  
+  shiny::actionButton("reset", label = "Reset")
+)
+
+test_server <- function(input, output, session) {
+  shinyjs::runjs("Shiny.addCustomMessageHandler('clearRanks', function(message) {
+    var tier1 = document.getElementById('rank_list_1');
+    var tier2 = document.getElementById('rank_list_2');
+    var tier3 = document.getElementById('rank_list_3');
+    tier1.innerHTML = '';
+    tier2.innerHTML = '';
+    tier3.innerHTML = '';
+  })")
+  
+  shiny::observeEvent(input$reset, {
+    shinyjs::js$sendCustomMessage("clearRanks", "")
+  })
+}
+
+shinyApp(test_ui, test_server)
+

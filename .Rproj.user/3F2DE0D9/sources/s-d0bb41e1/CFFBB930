@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1689344052870.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "CFFBB930",
+    "lastKnownWriteTime" : 1689862874,
+    "last_content_update" : 1689862874799,
+    "path" : "~/emthub/data-raw/ACCESSIBILITY_DATA.R",
+    "project_path" : "data-raw/ACCESSIBILITY_DATA.R",
+    "properties" : {
+        "cursorPosition" : "1,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 11,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

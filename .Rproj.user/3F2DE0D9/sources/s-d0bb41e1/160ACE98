@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1689857563264.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "160ACE98",
+    "lastKnownWriteTime" : 1688668044,
+    "last_content_update" : 1688668044,
+    "path" : "~/focalmap/R/Module-FCPH.R",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "1007,11",
+        "scrollLine" : "0",
+        "source_window_id" : ""
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 19,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}

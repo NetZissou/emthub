@@ -1,0 +1,98 @@
+library(tidyverse)
+data(penguins, package = "palmerpenguins")
+
+# cards <- list(
+#   card(
+#     full_screen = TRUE,
+#     card_header("Bill Length"),
+#     plotOutput("bill_length")
+#   ),
+#   card(
+#     full_screen = TRUE,
+#     card_header("Bill depth"),
+#     plotOutput("bill_depth")
+#   ),
+#   card(
+#     full_screen = TRUE,
+#     card_header("Body Mass"),
+#     plotOutput("body_mass")
+#   )
+# )
+# 
+# color_by <- varSelectInput(
+#   "color_by", "Color by", 
+#   penguins[c("species", "island", "sex")], 
+#   selected = "species"
+# )
+
+ui <- bslib::page_navbar(
+  title = "EMT Hub Dashboard",
+  
+  sidebar = NULL,
+  
+  bslib::nav_panel(
+    "Tab 1",
+    
+    bslib::accordion(
+      
+      open = c("Controls"),
+      bslib::accordion_panel(
+        "Controls",
+        sortable::bucket_list(
+          header = "Disease Outcomes of Interest",
+          group_name = "bucket_list_group",
+          orientation = "horizontal",
+          
+          sortable::add_rank_list(
+            text = "Tier 1",
+            labels = list(
+              "one",
+              "two",
+              "three",
+              htmltools::tags$div(
+                htmltools::em("Complex"), " html tag without a name"
+              ),
+              "five" = htmltools::tags$div(
+                htmltools::em("Complex"), " html tag with name: 'five'"
+              )
+            ),
+            input_id = "rank_list_1"
+          ),
+          sortable::add_rank_list(
+            text = "Tier 2",
+            labels = NULL,
+            input_id = "rank_list_2"
+          ),
+          sortable::add_rank_list(
+            text = "Tier 3",
+            labels = NULL,
+            input_id = "rank_list_3"
+          )
+        )
+      ),
+      bslib::accordion_panel(
+        "Result",
+        bslib::navset_card_tab(
+          full_screen = TRUE,
+          title = NULL,
+          bslib::nav_panel(
+            "Map",
+            #card_title("Map"),
+            leaflet::leafletOutput("index_map")
+          ),
+          
+          bslib::nav_panel(
+            shiny::icon("circle-info"),
+            reactable::reactableOutput("index_table")
+          )
+        )
+      )
+    )
+  ),
+  bslib::nav_panel("Tab 2",
+                   "XXX"
+  )
+  
+)
+
+shinyApp(ui, server)

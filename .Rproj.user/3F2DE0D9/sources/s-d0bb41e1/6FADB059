@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1688049233417.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "10|57|45|2|\n",
+    "hash" : "0",
+    "id" : "6FADB059",
+    "lastKnownWriteTime" : 1689691403,
+    "last_content_update" : 1689691403330,
+    "path" : "~/emthub/data-raw/BUSINESS_LOCATION_DATA.R",
+    "project_path" : "data-raw/BUSINESS_LOCATION_DATA.R",
+    "properties" : {
+        "cursorPosition" : "50,20",
+        "scrollLine" : "48"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 10,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
