@@ -9,6 +9,6 @@ usethis::use_data(SF_CENSUS_TRACT, overwrite = TRUE)
 
 
 SF_ZIP <-
-  sf::st_read("/fs/ess/PDE0003/Mahoning Valley Pilot/zip_level_analysis/tl_2021_us_zcta520_Mahoning_zips.geojson")
+  sf::st_read("/fs/ess/PDE0003/Mahoning Valley Pilot/zip_level_analysis/tl_2018_us_zcta510_for_Mahoning_County.geojson")
 usethis::use_data(SF_ZIP, overwrite = TRUE)
 

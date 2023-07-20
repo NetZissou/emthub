@@ -536,7 +536,7 @@ server <- function(input, output, session) {
         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
         label = ~ paste0(
-          "<b>", GEOID20, "</b>"
+          "<b>", GEOID10, "</b>"
         ) %>% lapply(htmltools::HTML),
 
         labelOptions = leaflet::labelOptions(
