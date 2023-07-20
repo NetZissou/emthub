@@ -5,9 +5,9 @@ account: netzissou
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 9384354
-bundleId: 7403619
+bundleId: 7478817
 url: https://netzissou.shinyapps.io/emthub/
-when: 1688074234.60443
-lastSyncTime: 1688074234.60446
+when: 1689860880.51888
+lastSyncTime: 1689860880.5189
 asMultiple: FALSE
 asStatic: FALSE

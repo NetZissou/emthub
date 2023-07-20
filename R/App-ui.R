@@ -57,13 +57,14 @@ ui <- function() {
               full_screen = TRUE
             ),
             bslib::card(
+              full_screen = TRUE,
               bslib::navset_pill(
                 bslib::nav_panel(
                   'Info',
                   shiny::htmlOutput("index_map_info")
                 ),
                 bslib::nav_panel(
-                  'Business',
+                  'Places',
 
                   bslib::layout_column_wrap(
                     width = 1/2,
@@ -101,7 +102,7 @@ ui <- function() {
                   ),
 
                   shiny::tags$hr(),
-                  shiny::helpText("Toggle to add business to the map"),
+                  shiny::helpText("Toggle to add places to the map"),
                   reactable::reactableOutput("business_table")
                 ),
 
@@ -174,10 +175,10 @@ ui <- function() {
 
       )
 
+    ),
+    bslib::nav_panel("Data",
+                     shiny::h3("Data Source Documentation")
     )
-    # bslib::nav_panel("Tab 2",
-    #                  "XXX"
-    # )
 
   )
 }

@@ -4,6 +4,8 @@
 "DISEASE_OUTCOMES"
 #' Census tract shapefile for Mahoning County
 "SF_CENSUS_TRACT"
+#' ZIP shapefile for Mahoning County
+"SF_ZIP"
 #' BUSINESS LOCATION DATA
 "BUSINESS_LOCATION_DATA"
 #' Census Tract Choices for business location filter

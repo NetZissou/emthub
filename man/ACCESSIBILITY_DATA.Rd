@@ -5,7 +5,7 @@
 \alias{ACCESSIBILITY_DATA}
 \title{ACCESSIBILITY_DATA}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 1050 rows and 5 columns.
+An object of class \code{sf} (inherits from \code{data.frame}) with 980 rows and 7 columns.
 }
 \usage{
 ACCESSIBILITY_DATA

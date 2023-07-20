@@ -56,7 +56,7 @@ server <- function(input, output, session) {
         leaflet::clearGroup(group = "Accessibility") %>%
         leaflet::removeControl(layerId = "acc_legend") %>%
         leaflet::addPolygons(
-          data = emthub::SF_CENSUS_TRACT %>% dplyr::left_join(acc_data$value, by = c("GEOID" = "censustract")),
+          data = acc_data$value,
           group = "Accessibility",
           stroke = TRUE,
           color = ~acc_data$pal(value),
@@ -67,7 +67,7 @@ server <- function(input, output, session) {
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
-            "<b>", GEOID, "</b>", "</br>", value
+            "<b>", censustract, "</b>", "</br>", value, " mins"
           ) %>% lapply(htmltools::HTML),
 
           labelOptions = leaflet::labelOptions(
@@ -90,7 +90,8 @@ server <- function(input, output, session) {
           ),
 
           # TODO: Process Layer ID
-          layerId = ~paste0("acc_", GEOID)
+          layerId = ~paste0("acc_", censustract),
+          options = leaflet::pathOptions(pane = "layer_bottom")
         ) %>%
         leaflet::addLegend(
           "bottomleft",
@@ -98,8 +99,12 @@ server <- function(input, output, session) {
           layerId = "acc_legend",
           data = acc_data$value,
           pal = acc_data$pal, values = ~value,
-          title = "Accessibility\nScore",
-          opacity = 1
+          title = glue::glue(
+            "Travel Time ({type})",
+            type = stringr::str_to_title(input$filter_transportation_method)
+          ),
+          opacity = 1,
+          labFormat = leaflet::labelFormat(suffix = " Mins")
         )
     }
 
@@ -358,7 +363,8 @@ server <- function(input, output, session) {
         ),
 
         # TODO: Process Layer ID
-        layerId = ~paste0("weighted_", GEOID)
+        layerId = ~paste0("weighted_", GEOID),
+        options = leaflet::pathOptions(pane = "layer_bottom")
       )
 
 
@@ -402,8 +408,29 @@ server <- function(input, output, session) {
   )
 
   SF_DISEASE_DATA <-
-    emthub::SF_CENSUS_TRACT %>% dplyr::left_join(emthub::DISEASE_DATA, by = c("GEOID" = "censustract"))
+    emthub::SF_CENSUS_TRACT %>%
+    dplyr::left_join(emthub::DISEASE_DATA, by = c("GEOID" = "censustract"))
 
+  # leaflet::leaflet() %>%
+  #   leaflet::addTiles() %>%
+  #   leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+  #   leaflet::addPolylines(
+  #     data = SF_DISEASE_DATA %>%
+  #       dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1) %>%
+  #       dplyr::select(.data$geometry) %>%
+  #       sf:::as_Spatial() %>%
+  #       HatchedPolygons::hatched.SpatialPolygons(
+  #         density = 70,
+  #         angle = 135
+  #       ),
+  #
+  #     group = "Low income & Low food access (1-10 miles)",
+  #     stroke = TRUE,
+  #     color = "black", #"#e6550d",
+  #     weight = 2.5,
+  #     dashArray = "2",
+  #     #fillOpacity = 0
+  #   )
 
 
   output$index_map <- leaflet::renderLeaflet({
@@ -418,6 +445,9 @@ server <- function(input, output, session) {
     # =================== #
     leaflet::addTiles() %>%
       leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+
+      leaflet::addMapPane("layer_top", zIndex=420) %>%
+      leaflet::addMapPane("layer_bottom",zIndex=410) %>%
 
       leaflet::addPolygons(
         data = SF_DISEASE_DATA,
@@ -452,7 +482,8 @@ server <- function(input, output, session) {
           bringToFront = TRUE,
           sendToBack = TRUE
         ),
-        layerId = ~GEOID
+        layerId = ~GEOID,
+        options = leaflet::pathOptions(pane = "layer_bottom")
       ) %>%
 
       leaflet::addPolygons(
@@ -490,45 +521,174 @@ server <- function(input, output, session) {
         ),
 
         # TODO: Process Layer ID
-        layerId = ~paste0("pov_", GEOID)
+        layerId = ~paste0("pov_", GEOID),
+        options = leaflet::pathOptions(pane = "layer_bottom")
       ) %>%
-
       leaflet::addPolygons(
+        data = emthub::SF_ZIP,
+        group = "Zip Code",
+        stroke = TRUE,
+        color = "#555555",
+        weight = 1,
+        opacity = 0.8,
+        dashArray = "3",
+        fillOpacity = 0.1,
+        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+
+        label = ~ paste0(
+          "<b>", GEOID20, "</b>"
+        ) %>% lapply(htmltools::HTML),
+
+        labelOptions = leaflet::labelOptions(
+          style = list(
+            "font-weight" = "normal",
+            padding = "3px 8px"
+          ),
+          textsize = "15px",
+          direction = "auto"
+        ),
+
+        highlight = leaflet::highlightOptions(
+          weight = 3,
+          fillOpacity = 0.1,
+          color = "black",
+          dashArray = "",
+          opacity = 0.5,
+          bringToFront = TRUE,
+          sendToBack = TRUE
+        ),
+        options = leaflet::pathOptions(pane = "layer_top")
+      ) %>%
+      leaflet::addPolylines(
         data = SF_DISEASE_DATA %>%
-          dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1),
+          dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1) %>%
+          dplyr::select(.data$geometry) %>%
+          sf:::as_Spatial() %>%
+          HatchedPolygons::hatched.SpatialPolygons(
+            density = 150,
+            angle = 45
+          ),
 
         group = "Low income & Low food access (1-10 miles)",
         stroke = TRUE,
         color = "black", #"#e6550d",
         weight = 2.5,
         dashArray = "1",
-        fillOpacity = 0
+        fillOpacity = 0,
+        options = leaflet::pathOptions(pane = "layer_top")
       ) %>%
 
-      leaflet::addPolygons(
+      leaflet::addPolylines(
         data = SF_DISEASE_DATA %>%
-          dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1),
+          dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1) %>%
+          dplyr::select(.data$geometry) %>%
+          sf:::as_Spatial() %>%
+          HatchedPolygons::hatched.SpatialPolygons(
+            density = 150,
+            angle = 60,
+          ),
 
         group = "Low income & Low food access (half-10 miles)",
         stroke = TRUE,
         color = "black", #"#e6550d",
         weight = 2.5,
         dashArray = "1",
-        fillOpacity = 0
+        fillOpacity = 0,
+        options = leaflet::pathOptions(pane = "layer_top")
       ) %>%
 
-      leaflet::addPolygons(
+      leaflet::addPolylines(
         data = SF_DISEASE_DATA %>%
-          dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1),
+          dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1) %>%
+          dplyr::select(.data$geometry) %>%
+          sf:::as_Spatial() %>%
+          HatchedPolygons::hatched.SpatialPolygons(
+            density = 150,
+            angle = 135
+          ),
 
         group = "Low income & Low food access (1-20 miles)",
         stroke = TRUE,
         color = "black", #"#e6550d",
         weight = 2.5,
         dashArray = "1",
-        fillOpacity = 0
+        fillOpacity = 0,
+        options = leaflet::pathOptions(pane = "layer_top")
       ) %>%
-
+      # leaflet::addPolygons(
+      #   data = SF_DISEASE_DATA %>%
+      #     dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1),
+      #
+      #   group = "Low income & Low food access (1-10 miles)",
+      #   stroke = TRUE,
+      #   color = "black", #"#e6550d",
+      #   weight = 2.5,
+      #   dashArray = "1",
+      #   fillOpacity = 0,
+      #   options = leaflet::pathOptions(pane = "layer_top"),
+      #   # highlight = leaflet::highlightOptions(
+      #   #   weight = 3,
+      #   #   fillOpacity = 0.1,
+      #   #   color = "black",
+      #   #   dashArray = "",
+      #   #   opacity = 0.5,
+      #   #   bringToFront = TRUE,
+      #   #   sendToBack = TRUE
+      #   # ),
+      #
+      #   # TODO: Process Layer ID
+      #   layerId = ~paste0("acctime_", GEOID)
+      # ) %>%
+      #
+      # leaflet::addPolygons(
+      #   data = SF_DISEASE_DATA %>%
+      #     dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1),
+      #
+      #   group = "Low income & Low food access (half-10 miles)",
+      #   stroke = TRUE,
+      #   color = "black", #"#e6550d",
+      #   weight = 2.5,
+      #   dashArray = "1",
+      #   fillOpacity = 0,
+      #   options = leaflet::pathOptions(pane = "layer_top"),
+      #   # highlight = leaflet::highlightOptions(
+      #   #   weight = 3,
+      #   #   fillOpacity = 0.1,
+      #   #   color = "black",
+      #   #   dashArray = "",
+      #   #   opacity = 0.5,
+      #   #   bringToFront = TRUE,
+      #   #   sendToBack = TRUE
+      #   # ),
+      #
+      #   # TODO: Process Layer ID
+      #   layerId = ~paste0("acctime_", GEOID)
+      # ) %>%
+      #
+      # leaflet::addPolygons(
+      #   data = SF_DISEASE_DATA %>%
+      #     dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1),
+      #
+      #   group = "Low income & Low food access (1-20 miles)",
+      #   stroke = TRUE,
+      #   color = "black", #"#e6550d",
+      #   weight = 2.5,
+      #   dashArray = "1",
+      #   fillOpacity = 0,
+      #   options = leaflet::pathOptions(pane = "layer_top"),
+      #   # highlight = leaflet::highlightOptions(
+      #   #   weight = 3,
+      #   #   fillOpacity = 0.1,
+      #   #   color = "black",
+      #   #   dashArray = "",
+      #   #   opacity = 0.5,
+      #   #   bringToFront = TRUE,
+      #   #   sendToBack = TRUE
+      #   # ),
+      #
+      #   # TODO: Process Layer ID
+      #   layerId = ~paste0("acctime_", GEOID)
+      # ) %>%
       leaflet::addLegend(
         "bottomright",
         group = "Disease Outcomes Rank Score",
@@ -556,6 +716,7 @@ server <- function(input, output, session) {
         ),
         overlayGroups = c(
           "Business Location",
+          "Zip Code",
           "Low income & Low food access (1-10 miles)",
           "Low income & Low food access (half-10 miles)",
           "Low income & Low food access (1-20 miles)"
@@ -565,6 +726,7 @@ server <- function(input, output, session) {
       leaflet::hideGroup(
         c(
           #"Business Location",
+          "Zip Code",
           "Low income & Low food access (1-10 miles)",
           "Low income & Low food access (half-10 miles)",
           "Low income & Low food access (1-20 miles)"
@@ -679,7 +841,8 @@ server <- function(input, output, session) {
               "font-style" = "bold",
               "border-color" = "rgba(0,0,0,0.5)"
             )
-          )
+          ),
+          options = leaflet::pathOptions(pane = "layer_top")
         )
 
     } else {
