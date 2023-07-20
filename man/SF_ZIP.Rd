@@ -5,7 +5,7 @@
 \alias{SF_ZIP}
 \title{ZIP shapefile for Mahoning County}
 \format{
-An object of class \code{sf} (inherits from \code{data.frame}) with 43 rows and 11 columns.
+An object of class \code{sf} (inherits from \code{data.frame}) with 40 rows and 11 columns.
 }
 \usage{
 SF_ZIP
