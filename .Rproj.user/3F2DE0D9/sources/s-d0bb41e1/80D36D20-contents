@@ -1,3 +1,4 @@
+# add to .gitignore to ignore files
 .Rproj.user
 .Rhistory
 .Rdata

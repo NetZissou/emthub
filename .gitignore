@@ -1,1 +1,6 @@
 # add to .gitignore to ignore files
+.Rproj.user
+.Rhistory
+.Rdata
+.httr-oauth
+.DS_Store
