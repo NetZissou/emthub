@@ -13,7 +13,7 @@
     "project_path" : "data-raw/BUSINESS_LOCATION_DATA.R",
     "properties" : {
         "cursorPosition" : "50,20",
-        "scrollLine" : "48"
+        "scrollLine" : "0"
     },
     "read_only" : false,
     "read_only_alternatives" : [

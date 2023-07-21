@@ -563,7 +563,7 @@ server <- function(input, output, session) {
         data = SF_DISEASE_DATA %>%
           dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1) %>%
           dplyr::select(.data$geometry) %>%
-          sf:::as_Spatial() %>%
+          sf::as_Spatial() %>%
           HatchedPolygons::hatched.SpatialPolygons(
             density = 150,
             angle = 45
@@ -582,7 +582,7 @@ server <- function(input, output, session) {
         data = SF_DISEASE_DATA %>%
           dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1) %>%
           dplyr::select(.data$geometry) %>%
-          sf:::as_Spatial() %>%
+          sf::as_Spatial() %>%
           HatchedPolygons::hatched.SpatialPolygons(
             density = 150,
             angle = 60,
@@ -601,7 +601,7 @@ server <- function(input, output, session) {
         data = SF_DISEASE_DATA %>%
           dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1) %>%
           dplyr::select(.data$geometry) %>%
-          sf:::as_Spatial() %>%
+          sf::as_Spatial() %>%
           HatchedPolygons::hatched.SpatialPolygons(
             density = 150,
             angle = 135

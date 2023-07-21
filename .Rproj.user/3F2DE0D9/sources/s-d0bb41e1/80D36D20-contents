@@ -1,5 +1,5 @@
 # add to .gitignore to ignore files
-.Rproj.user
+.Rproj.user/*
 .Rhistory
 .Rdata
 .httr-oauth

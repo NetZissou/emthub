@@ -5,14 +5,14 @@
     "dirty" : false,
     "encoding" : "UTF-8",
     "folds" : "",
-    "hash" : "2043526606",
+    "hash" : "0",
     "id" : "80D36D20",
-    "lastKnownWriteTime" : 1689885696,
-    "last_content_update" : 1689885696659,
+    "lastKnownWriteTime" : 1689955559,
+    "last_content_update" : 1689955559117,
     "path" : "~/emthub/.gitignore",
     "project_path" : ".gitignore",
     "properties" : {
-        "cursorPosition" : "6,0",
+        "cursorPosition" : "4,11",
         "scrollLine" : "0"
     },
     "read_only" : false,
