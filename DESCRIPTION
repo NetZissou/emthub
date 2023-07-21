@@ -1,9 +1,19 @@
 Package: emthub
-Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Title: EMTHUB app
+Version: 0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    c(
+        person(
+            given = "Net", family = "Zhang",
+            role = c("aut", "cre"),
+            email = "zhang.11091@osu.edu"
+        ),
+        person(
+            given = "Ayaz", family = "Hyder",
+            role = c("aut", "cph"),
+            email = "hyder.22@osu.edu"
+        )
+    )
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
 Encoding: UTF-8
