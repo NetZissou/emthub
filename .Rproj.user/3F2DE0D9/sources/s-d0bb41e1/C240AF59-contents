@@ -1,1 +1,0 @@
-x <- readr::read_csv("/fs/ess/PDE0003/Mahoning Valley Pilot/CDC Places/Composite_index_for_Mahoning_county_health_outcomes.csv")

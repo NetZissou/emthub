@@ -1,5 +1,0 @@
-addr <- "LAKE MILTON PRESBYTERIAN CHR, 942 GRANDVIEW RD, LAKE MILTON, 44429"
-encoded_address <- urltools::url_encode(addr)
-google_maps_url <- paste0("https://www.google.com/maps/search/?api=1&query=", encoded_address)
-
-google_maps_url <- paste0("https://www.google.com/maps/search/?api=1&query=", emthub::BUSINESS_LOCATION_DATA[1,]$Latitude, ",", emthub::BUSINESS_LOCATION_DATA[1,]$Longitude)
