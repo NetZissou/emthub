@@ -4,7 +4,6 @@ LABEL maintainer 'Jeff Ohrstrom <johrstrom@osc.edu>'
 ENV R_BASE_VERSION 4.0.3
 ENV CRAN https://cran.case.edu/
 
-RUN dnf update -y ca-certificates
 RUN dnf update -y && dnf clean all && rm -rf /var/cache/dnf/*
 RUN dnf install -y \
         dnf-utils \
@@ -16,6 +15,7 @@ RUN dnf install -y \
         udunits2-devel cairo-devel proj-devel sqlite-devel geos-devel gdal gdal-devel \
         readline-devel libXt-devel java-11-openjdk-devel doxygen doxygen-latex texlive \
         freetype-devel libpng-devel libtiff-devel harfbuzz-devel fribidi-devel cmake R \
+        sssd \
     && dnf clean all && rm -rf /var/cache/dnf/*
 
 # cairo is available, but sadly not found first, so force to find it.
@@ -26,8 +26,6 @@ RUN curl --fail -sSLo /etc/yum.repos.d/passenger.repo https://oss-binaries.phusi
     dnf install -y passenger && \
     dnf clean all && rm -rf /var/cache/dnf/* && \
     passenger-config validate-install
-
-RUN echo 'cache bsdt'
 
 # build all the dependencies before you copy the app to cache these layers
 RUN Rscript -e "install.packages('devtools')"
