@@ -50,7 +50,7 @@ ENV LANG=C.UTF-8
 RUN cd /app; Rscript -e "library('devtools'); install()"
 
 RUN groupadd -g 8052 PAS2531
-RUN useradd -g PAS2531 -u 1001 -m emthub
+RUN useradd -g PAS2531 -u 42168 -m emthub
 RUN chown -R emthub: /app
 
 WORKDIR /app
