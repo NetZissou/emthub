@@ -106,3 +106,60 @@ check_files_update_time <- function(
     dplyr::arrange(dplyr::desc(.data$modification_time))
 }
 
+
+
+
+cut_time_label <- function(time, type = c("car", "walk", "transit")) {
+
+  if (type == "car") {
+
+    unit_func <-
+      function(time) {
+        if (time < 15) {
+          return("<15 mins")
+        } else if (time >= 15 & time < 30) {
+          return("15-29 mins")
+        } else {
+          return(">30 mins")
+        }
+      }
+
+  } else if (type == "transit") {
+
+    unit_func <-
+      function(time) {
+        if (time < 30) {
+          return("<30 mins")
+        } else if (time >= 30 & time < 45) {
+          return("30-44 mins")
+        } else if (time >= 45 & time < 89) {
+          return("45-89 mins")
+        } else {
+          ">90 mins"
+        }
+      }
+
+  } else if (type == "walk") {
+
+    unit_func <-
+      function(time) {
+        if (time < 4) {
+          return("<5 mins")
+        } else if (time >= 5 & time < 10) {
+          return("5-9 mins")
+        } else if (time >= 10 & time < 20) {
+          return("10-19 mins")
+        } else if (time >= 20 & time < 30) {
+          "20-29 mins"
+        } else {
+          ">30 mins"
+        }
+      }
+  }
+
+
+  purrr::map_chr(time, purrr::safely(unit_func, otherwise = NA))
+}
+
+
+

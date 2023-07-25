@@ -20,6 +20,7 @@ server <- function(input, output, session) {
       pal = NULL
     )
 
+
   updateAcc <-
     function() {
 
@@ -36,20 +37,42 @@ server <- function(input, output, session) {
 
         acc_data_filtered <-
           acc_data_filtered %>%
-          dplyr::select(
+          dplyr::transmute(
             .data$censustract,
             .data$Business_type,
-            value = .data[[input$filter_transportation_method]]
+            value = .data[[input$filter_transportation_method]],
+            value_fct = emthub::ACC_PARAM_LIST$case[[input$filter_transportation_method]](.data$value)
           )
       }
 
       acc_data$value <- acc_data_filtered
+      # acc_data$pal <-
+      #   leaflet::colorNumeric(
+      #     palette = "Reds",
+      #     domain = acc_data_filtered$value,
+      #     na.color = "#808080"
+      #   )
       acc_data$pal <-
-        leaflet::colorNumeric(
-          palette = "Reds",
-          domain = acc_data_filtered$value,
-          na.color = "#808080"
+        leaflet::colorFactor(
+          palette = emthub::ACC_PARAM_LIST$color[[input$filter_transportation_method]],
+          # domain = factor(
+          #   emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]],
+          #   levels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]]
+          # ),
+          domain = emthub::ACC_PARAM_LIST$level_n[[input$filter_transportation_method]]
+          #levels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]],
+          #ordered = TRUE
         )
+
+      # test_type <- "car"
+      # pal <-
+      #   leaflet::colorFactor(
+      #     palette = emthub::ACC_PARAM_LIST$color[[test_type]],
+      #     domain = emthub::ACC_PARAM_LIST$level[[test_type]],
+      #     levels = emthub::ACC_PARAM_LIST$level[[test_type]],
+      #     ordered = TRUE
+      #   )
+
 
 
       leaflet::leafletProxy("index_map") %>%
@@ -59,7 +82,7 @@ server <- function(input, output, session) {
           data = acc_data$value,
           group = "Accessibility",
           stroke = TRUE,
-          color = ~acc_data$pal(value),
+          color = ~acc_data$pal(value_fct),
           weight = 1,
           #opacity = 0.8,
           dashArray = "3",
@@ -98,13 +121,13 @@ server <- function(input, output, session) {
           group = "Accessibility",
           layerId = "acc_legend",
           data = acc_data$value,
-          pal = acc_data$pal, values = ~value,
-          title = glue::glue(
-            "Travel Time ({type})",
-            type = stringr::str_to_title(input$filter_transportation_method)
-          ),
+          #pal = acc_data$pal,
+          colors = emthub::ACC_PARAM_LIST$color[[input$filter_transportation_method]],
+          values = ~value_fct,
+          title = emthub::ACC_PARAM_LIST$legend_title[[input$filter_transportation_method]],
           opacity = 1,
-          labFormat = leaflet::labelFormat(suffix = " Mins")
+          labels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]]
+          #labFormat = leaflet::labelFormat(suffix = " Mins")
         )
     }
 
@@ -626,77 +649,77 @@ server <- function(input, output, session) {
       #   dashArray = "1",
       #   fillOpacity = 0,
       #   options = leaflet::pathOptions(pane = "layer_top"),
-      #   # highlight = leaflet::highlightOptions(
-      #   #   weight = 3,
-      #   #   fillOpacity = 0.1,
-      #   #   color = "black",
-      #   #   dashArray = "",
-      #   #   opacity = 0.5,
-      #   #   bringToFront = TRUE,
-      #   #   sendToBack = TRUE
-      #   # ),
-      #
-      #   # TODO: Process Layer ID
-      #   layerId = ~paste0("acctime_", GEOID)
-      # ) %>%
-      #
-      # leaflet::addPolygons(
-      #   data = SF_DISEASE_DATA %>%
-      #     dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1),
-      #
-      #   group = "Low income & Low food access (half-10 miles)",
-      #   stroke = TRUE,
-      #   color = "black", #"#e6550d",
-      #   weight = 2.5,
-      #   dashArray = "1",
-      #   fillOpacity = 0,
-      #   options = leaflet::pathOptions(pane = "layer_top"),
-      #   # highlight = leaflet::highlightOptions(
-      #   #   weight = 3,
-      #   #   fillOpacity = 0.1,
-      #   #   color = "black",
-      #   #   dashArray = "",
-      #   #   opacity = 0.5,
-      #   #   bringToFront = TRUE,
-      #   #   sendToBack = TRUE
-      #   # ),
-      #
-      #   # TODO: Process Layer ID
-      #   layerId = ~paste0("acctime_", GEOID)
-      # ) %>%
-      #
-      # leaflet::addPolygons(
-      #   data = SF_DISEASE_DATA %>%
-      #     dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1),
-      #
-      #   group = "Low income & Low food access (1-20 miles)",
-      #   stroke = TRUE,
-      #   color = "black", #"#e6550d",
-      #   weight = 2.5,
-      #   dashArray = "1",
-      #   fillOpacity = 0,
-      #   options = leaflet::pathOptions(pane = "layer_top"),
-      #   # highlight = leaflet::highlightOptions(
-      #   #   weight = 3,
-      #   #   fillOpacity = 0.1,
-      #   #   color = "black",
-      #   #   dashArray = "",
-      #   #   opacity = 0.5,
-      #   #   bringToFront = TRUE,
-      #   #   sendToBack = TRUE
-      #   # ),
-      #
-      #   # TODO: Process Layer ID
-      #   layerId = ~paste0("acctime_", GEOID)
-      # ) %>%
-      leaflet::addLegend(
-        "bottomright",
-        group = "Disease Outcomes Rank Score",
-        data = emthub::DISEASE_DATA,
-        pal = pal_scaled_sum_rank, values = ~scaled_rank_sum,
-        title = "Rank Score",
-        opacity = 1
-      ) %>%
+    #   # highlight = leaflet::highlightOptions(
+    #   #   weight = 3,
+    #   #   fillOpacity = 0.1,
+    #   #   color = "black",
+    #   #   dashArray = "",
+    #   #   opacity = 0.5,
+    #   #   bringToFront = TRUE,
+    #   #   sendToBack = TRUE
+    #   # ),
+    #
+    #   # TODO: Process Layer ID
+    #   layerId = ~paste0("acctime_", GEOID)
+    # ) %>%
+    #
+    # leaflet::addPolygons(
+    #   data = SF_DISEASE_DATA %>%
+    #     dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1),
+    #
+    #   group = "Low income & Low food access (half-10 miles)",
+    #   stroke = TRUE,
+    #   color = "black", #"#e6550d",
+    #   weight = 2.5,
+    #   dashArray = "1",
+    #   fillOpacity = 0,
+    #   options = leaflet::pathOptions(pane = "layer_top"),
+    #   # highlight = leaflet::highlightOptions(
+    #   #   weight = 3,
+    #   #   fillOpacity = 0.1,
+    #   #   color = "black",
+    #   #   dashArray = "",
+    #   #   opacity = 0.5,
+    #   #   bringToFront = TRUE,
+    #   #   sendToBack = TRUE
+    #   # ),
+    #
+    #   # TODO: Process Layer ID
+    #   layerId = ~paste0("acctime_", GEOID)
+    # ) %>%
+    #
+    # leaflet::addPolygons(
+    #   data = SF_DISEASE_DATA %>%
+    #     dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1),
+    #
+    #   group = "Low income & Low food access (1-20 miles)",
+    #   stroke = TRUE,
+    #   color = "black", #"#e6550d",
+    #   weight = 2.5,
+    #   dashArray = "1",
+    #   fillOpacity = 0,
+    #   options = leaflet::pathOptions(pane = "layer_top"),
+    #   # highlight = leaflet::highlightOptions(
+    #   #   weight = 3,
+    #   #   fillOpacity = 0.1,
+    #   #   color = "black",
+    #   #   dashArray = "",
+    #   #   opacity = 0.5,
+    #   #   bringToFront = TRUE,
+    #   #   sendToBack = TRUE
+    #   # ),
+    #
+    #   # TODO: Process Layer ID
+    #   layerId = ~paste0("acctime_", GEOID)
+    # ) %>%
+    leaflet::addLegend(
+      "bottomright",
+      group = "Disease Outcomes Rank Score",
+      data = emthub::DISEASE_DATA,
+      pal = pal_scaled_sum_rank, values = ~scaled_rank_sum,
+      title = "Rank Score",
+      opacity = 1
+    ) %>%
 
       leaflet::addLegend(
         "bottomright",
