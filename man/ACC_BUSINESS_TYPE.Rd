@@ -3,7 +3,8 @@
 \docType{data}
 \name{ACC_BUSINESS_TYPE}
 \alias{ACC_BUSINESS_TYPE}
-\title{ACC_BUSINESS_TYPE}
+\title{ACCESSIBILITY_DATA
+ACC_BUSINESS_TYPE}
 \format{
 An object of class \code{character} of length 14.
 }
@@ -11,6 +12,7 @@ An object of class \code{character} of length 14.
 ACC_BUSINESS_TYPE
 }
 \description{
+ACCESSIBILITY_DATA
 ACC_BUSINESS_TYPE
 }
 \keyword{datasets}

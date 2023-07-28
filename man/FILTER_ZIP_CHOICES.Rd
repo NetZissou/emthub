@@ -5,7 +5,7 @@
 \alias{FILTER_ZIP_CHOICES}
 \title{Zip Choices for business location filter}
 \format{
-An object of class \code{character} of length 63.
+An object of class \code{character} of length 37.
 }
 \usage{
 FILTER_ZIP_CHOICES

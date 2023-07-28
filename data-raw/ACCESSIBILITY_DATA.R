@@ -1,11 +1,13 @@
 ## code to prepare `ACCESSIBILITY_DATA` dataset goes here
-ACCESSIBILITY_DATA <-
-  sf::st_read(
-    "/fs/ess/PDE0003/Mahoning Valley Pilot/mahoning_accessibility_ctracts_2010.geojson"
-  ) %>%
-  dplyr::mutate(
-    censustract = as.character(.data$censustract)
-  )
+# ACCESSIBILITY_DATA <-
+#   sf::st_read(
+#     "/fs/ess/PDE0003/Mahoning Valley Pilot/mahoning_accessibility_ctracts_2010.geojson"
+#   ) %>%
+#   dplyr::mutate(
+#     censustract = as.character(.data$censustract)
+#   )
+
+ACCESSIBILITY_DATA <- get_acc_data()
 
 ACC_BUSINESS_TYPE <- unique(ACCESSIBILITY_DATA$Business_type)
 ACC_TRANSPORTATION_METHODS <- c("car", "transit", "walk")
@@ -103,7 +105,7 @@ ACC_PARAM_LIST <- list(
 
 
 
-usethis::use_data(ACCESSIBILITY_DATA, overwrite = TRUE)
+#usethis::use_data(ACCESSIBILITY_DATA, overwrite = TRUE)
 usethis::use_data(ACC_BUSINESS_TYPE, overwrite = TRUE)
 usethis::use_data(ACC_TRANSPORTATION_METHODS, overwrite = TRUE)
 usethis::use_data(ACC_PARAM_LIST, overwrite = TRUE)

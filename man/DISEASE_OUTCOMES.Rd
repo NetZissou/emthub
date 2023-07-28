@@ -3,7 +3,8 @@
 \docType{data}
 \name{DISEASE_OUTCOMES}
 \alias{DISEASE_OUTCOMES}
-\title{Disease data outcomes}
+\title{Processed disease data
+Disease data outcomes}
 \format{
 An object of class \code{character} of length 12.
 }
@@ -11,6 +12,7 @@ An object of class \code{character} of length 12.
 DISEASE_OUTCOMES
 }
 \description{
+Processed disease data
 Disease data outcomes
 }
 \keyword{datasets}

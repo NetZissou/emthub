@@ -9,9 +9,23 @@ server <- function(input, output, session) {
 
   #bslib::bs_themer()
   # Input
+
+  ACCESSIBILITY_DATA <- get_acc_data()
+  BUSINESS_LOCATION_DATA <- get_business_location()
+  DISEASE_DATA <- get_disease_data()
+
+
+  SF_ZIP <- get_sf_zip()
+  SF_CENSUS_TRACT <- get_sf_ct()
+  SF_DISEASE_DATA <-
+    SF_CENSUS_TRACT %>%
+    dplyr::left_join(DISEASE_DATA, by = c("GEOID" = "censustract"))
+
+
+
   business_data <-
     shiny::reactiveValues(
-      filtered = emthub::BUSINESS_LOCATION_DATA
+      filtered = BUSINESS_LOCATION_DATA
     )
 
   acc_data <-
@@ -24,13 +38,13 @@ server <- function(input, output, session) {
   updateAcc <-
     function() {
 
-      acc_data_filtered <- emthub::ACCESSIBILITY_DATA
+      acc_data_filtered <- ACCESSIBILITY_DATA
 
       if (!rlang::is_empty(input$filter_acc_type)) {
 
         acc_data_filtered <-
           acc_data_filtered %>%
-          dplyr::filter(.data$Business_type == input$filter_acc_type)
+          dplyr::filter(.data$Business_type_condensed == input$filter_acc_type)
       }
 
       if (!rlang::is_empty(input$filter_transportation_method)) {
@@ -39,7 +53,7 @@ server <- function(input, output, session) {
           acc_data_filtered %>%
           dplyr::transmute(
             .data$censustract,
-            .data$Business_type,
+            .data$Business_type_condensed,
             value = .data[[input$filter_transportation_method]],
             value_fct = emthub::ACC_PARAM_LIST$case[[input$filter_transportation_method]](.data$value)
           )
@@ -134,7 +148,7 @@ server <- function(input, output, session) {
   updateBusiness <-
     function () {
 
-      filtered <- emthub::BUSINESS_LOCATION_DATA
+      filtered <- BUSINESS_LOCATION_DATA
 
       if (!rlang::is_empty(input$filter_ct)) {
 
@@ -314,14 +328,14 @@ server <- function(input, output, session) {
 
     tier_score_tbl$value <-
       get_tier_score(
-        emthub::DISEASE_DATA,
+        DISEASE_DATA,
         input$rank_list_1,
         "tier_1",
         weight = tier_weight_list$tier_1
       ) %>% dplyr::left_join(
 
         get_tier_score(
-          emthub::DISEASE_DATA,
+          DISEASE_DATA,
           input$rank_list_2,
           "tier_2",
           weight = tier_weight_list$tier_2
@@ -330,7 +344,7 @@ server <- function(input, output, session) {
       ) %>% dplyr::left_join(
 
         get_tier_score(
-          emthub::DISEASE_DATA,
+          DISEASE_DATA,
           input$rank_list_3,
           "tier_3",
           weight = tier_weight_list$tier_3
@@ -352,7 +366,7 @@ server <- function(input, output, session) {
     leaflet::leafletProxy("index_map") %>%
       leaflet::clearGroup(group = "Disease Outcomes Weighted Rank Score") %>%
       leaflet::addPolygons(
-        data = emthub::SF_CENSUS_TRACT %>% dplyr::left_join(tier_score_tbl$value, by = c("GEOID" = "censustract")),
+        data = SF_CENSUS_TRACT %>% dplyr::left_join(tier_score_tbl$value, by = c("GEOID" = "censustract")),
         group = "Disease Outcomes Weighted Rank Score",
         stroke = TRUE,
         color = ~pal_scaled_sum_rank(weighted_score_scaled),
@@ -421,18 +435,15 @@ server <- function(input, output, session) {
 
   pal_scaled_sum_rank <- leaflet::colorNumeric(
     palette = "Reds",
-    domain = emthub::DISEASE_DATA$scaled_rank_sum,
+    domain = DISEASE_DATA$scaled_rank_sum,
     na.color = "#808080"
   )
 
   pal_poverty_rate <- leaflet::colorNumeric(
     palette = "RdPu",
-    domain = emthub::DISEASE_DATA$PovertyRate
+    domain = DISEASE_DATA$PovertyRate
   )
 
-  SF_DISEASE_DATA <-
-    emthub::SF_CENSUS_TRACT %>%
-    dplyr::left_join(emthub::DISEASE_DATA, by = c("GEOID" = "censustract"))
 
   # leaflet::leaflet() %>%
   #   leaflet::addTiles() %>%
@@ -548,7 +559,7 @@ server <- function(input, output, session) {
         options = leaflet::pathOptions(pane = "layer_bottom")
       ) %>%
       leaflet::addPolygons(
-        data = emthub::SF_ZIP,
+        data = SF_ZIP,
         group = "Zip Code",
         stroke = TRUE,
         color = "#555555",
@@ -715,7 +726,7 @@ server <- function(input, output, session) {
     leaflet::addLegend(
       "bottomright",
       group = "Disease Outcomes Rank Score",
-      data = emthub::DISEASE_DATA,
+      data = DISEASE_DATA,
       pal = pal_scaled_sum_rank, values = ~scaled_rank_sum,
       title = "Rank Score",
       opacity = 1
@@ -724,7 +735,7 @@ server <- function(input, output, session) {
       leaflet::addLegend(
         "bottomright",
         group = "Poverty Rate",
-        data = emthub::DISEASE_DATA,
+        data = DISEASE_DATA,
         pal = pal_poverty_rate, values = ~PovertyRate,
         title = "Poverty Rate",
         opacity = 1
@@ -773,7 +784,7 @@ server <- function(input, output, session) {
       selected_census_tract <- ct_selected()
 
       ct_disease_rank_data <-
-        emthub::DISEASE_DATA %>%
+        DISEASE_DATA %>%
         dplyr::filter(.data$censustract == as.character(selected_census_tract)) %>%
         dplyr::select(dplyr::all_of(c(
           #DISEASE_OUTCOMES,
@@ -817,7 +828,8 @@ server <- function(input, output, session) {
         .data$Name,
         .data$Address,
         .data$City,
-        `Zip` = .data$`Zip Code`
+        `Zip` = .data$`Zip Code`,
+        `Operational` = .data$operational_status
       ) %>%
       reactable::reactable(
         # Table Format
@@ -887,7 +899,7 @@ server <- function(input, output, session) {
     #
     #   print(
     #     get_tier_score(
-    #       emthub::DISEASE_DATA,
+    #       DISEASE_DATA,
     #       input$rank_list_1,
     #       "tier_1",
     #       0.5

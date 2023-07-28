@@ -5,7 +5,7 @@
 \alias{FILTER_CITY_CHOICES}
 \title{City Choices for business location filter}
 \format{
-An object of class \code{character} of length 48.
+An object of class \code{character} of length 26.
 }
 \usage{
 FILTER_CITY_CHOICES

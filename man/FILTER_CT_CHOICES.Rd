@@ -3,14 +3,20 @@
 \docType{data}
 \name{FILTER_CT_CHOICES}
 \alias{FILTER_CT_CHOICES}
-\title{Census Tract Choices for business location filter}
+\title{Census tract shapefile for Mahoning County
+ZIP shapefile for Mahoning County
+BUSINESS LOCATION DATA
+Census Tract Choices for business location filter}
 \format{
-An object of class \code{character} of length 123.
+An object of class \code{character} of length 68.
 }
 \usage{
 FILTER_CT_CHOICES
 }
 \description{
+Census tract shapefile for Mahoning County
+ZIP shapefile for Mahoning County
+BUSINESS LOCATION DATA
 Census Tract Choices for business location filter
 }
 \keyword{datasets}
