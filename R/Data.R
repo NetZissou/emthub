@@ -3,7 +3,7 @@
 get_acc_data <- function() {
 
   sf::st_read(
-    "/fs/ess/PDE0003/Mahoning Valley Pilot/mahoning_accessibility_ctracts_2010.geojson"
+    "/fs/ess/PAS2531/emthub/Accessibility/mahoning_accessibility_ctracts_2010.geojson"
   ) %>%
     dplyr::mutate(
       censustract = as.character(.data$censustract)
