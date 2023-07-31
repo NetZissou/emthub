@@ -649,80 +649,6 @@ server <- function(input, output, session) {
         fillOpacity = 0,
         options = leaflet::pathOptions(pane = "layer_top")
       ) %>%
-      # leaflet::addPolygons(
-      #   data = SF_DISEASE_DATA %>%
-      #     dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1),
-      #
-      #   group = "Low income & Low food access (1-10 miles)",
-      #   stroke = TRUE,
-      #   color = "black", #"#e6550d",
-      #   weight = 2.5,
-      #   dashArray = "1",
-      #   fillOpacity = 0,
-      #   options = leaflet::pathOptions(pane = "layer_top"),
-    #   # highlight = leaflet::highlightOptions(
-    #   #   weight = 3,
-    #   #   fillOpacity = 0.1,
-    #   #   color = "black",
-    #   #   dashArray = "",
-    #   #   opacity = 0.5,
-    #   #   bringToFront = TRUE,
-    #   #   sendToBack = TRUE
-    #   # ),
-    #
-    #   # TODO: Process Layer ID
-    #   layerId = ~paste0("acctime_", GEOID)
-    # ) %>%
-    #
-    # leaflet::addPolygons(
-    #   data = SF_DISEASE_DATA %>%
-    #     dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1),
-    #
-    #   group = "Low income & Low food access (half-10 miles)",
-    #   stroke = TRUE,
-    #   color = "black", #"#e6550d",
-    #   weight = 2.5,
-    #   dashArray = "1",
-    #   fillOpacity = 0,
-    #   options = leaflet::pathOptions(pane = "layer_top"),
-    #   # highlight = leaflet::highlightOptions(
-    #   #   weight = 3,
-    #   #   fillOpacity = 0.1,
-    #   #   color = "black",
-    #   #   dashArray = "",
-    #   #   opacity = 0.5,
-    #   #   bringToFront = TRUE,
-    #   #   sendToBack = TRUE
-    #   # ),
-    #
-    #   # TODO: Process Layer ID
-    #   layerId = ~paste0("acctime_", GEOID)
-    # ) %>%
-    #
-    # leaflet::addPolygons(
-    #   data = SF_DISEASE_DATA %>%
-    #     dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1),
-    #
-    #   group = "Low income & Low food access (1-20 miles)",
-    #   stroke = TRUE,
-    #   color = "black", #"#e6550d",
-    #   weight = 2.5,
-    #   dashArray = "1",
-    #   fillOpacity = 0,
-    #   options = leaflet::pathOptions(pane = "layer_top"),
-    #   # highlight = leaflet::highlightOptions(
-    #   #   weight = 3,
-    #   #   fillOpacity = 0.1,
-    #   #   color = "black",
-    #   #   dashArray = "",
-    #   #   opacity = 0.5,
-    #   #   bringToFront = TRUE,
-    #   #   sendToBack = TRUE
-    #   # ),
-    #
-    #   # TODO: Process Layer ID
-    #   layerId = ~paste0("acctime_", GEOID)
-    # ) %>%
     leaflet::addLegend(
       "bottomright",
       group = "Disease Outcomes Rank Score",
@@ -889,25 +815,7 @@ server <- function(input, output, session) {
     #print(selected_business$value)
   })
 
-  shiny::observe({
-    # print(input$index_map_shape_click)
-    # print(input$rank_list_1)
-    # print(input$rank_list_2)
-    # print(input$rank_list_3)
-
-    # if (!rlang::is_empty(input$rank_list_1)) {
-    #
-    #   print(
-    #     get_tier_score(
-    #       DISEASE_DATA,
-    #       input$rank_list_1,
-    #       "tier_1",
-    #       0.5
-    #     )
-    #   )
-    # }
-
-  })
+  equityMapServer("equity_map")
 
 
   # Table

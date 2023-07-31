@@ -178,7 +178,15 @@ ui <- function() {
     ),
     bslib::nav_panel("Data",
                      shiny::h3("Data Source Documentation")
+    ),
+
+    bslib::nav_panel(
+      "Beta",
+
+      equityMapUI("equity_map")
+
     )
+
 
   )
 }
