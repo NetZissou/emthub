@@ -1,19 +1,33 @@
 
-
+# ============= #
+# ---- Acc ----
+# ============= #
 get_acc_data <- function() {
 
   sf::st_read(
-    "/fs/ess/PAS2531/emthub/Accessibility/mahoning_accessibility_ctracts_2010.geojson"
+    fs::path(
+      emthub::ROOT,
+      "Accessibility",
+      "mahoning_accessibility_ctracts_2010.geojson"
+    )
   ) %>%
     dplyr::mutate(
       censustract = as.character(.data$censustract)
     )
 }
+
+# ====================== #
+# ---- Disease Data ----
+# ====================== #
 
 get_disease_data <- function() {
 
   readr::read_csv(
-    "/fs/ess/PAS2531/emthub/Disease/mahoning_county_data.csv"
+    fs::path(
+      emthub::ROOT,
+      "Disease",
+      "mahoning_county_data.csv"
+    )
   ) %>%
     dplyr::mutate(
       censustract = as.character(.data$censustract)
@@ -21,22 +35,18 @@ get_disease_data <- function() {
 }
 
 
-get_sf_ct <- function() {
-
-  sf::st_read("/fs/ess/PAS2531/emthub/Shapefile/sf_census_tract.geojson") %>%
-    dplyr::filter(
-      as.character(.data$GEOID) %in% as.character(get_disease_data()$censustract)
-    )
-}
-
-get_sf_zip <- function() {
-  sf::st_read("/fs/ess/PAS2531/emthub/Shapefile/tl_2018_us_zcta510_for_Mahoning_County.geojson")
-}
+# ================================ #
+# ---- Places Data (Mahoning) ----
+# ================================ #
 
 get_business_location <- function() {
 
   readr::read_csv(
-    "/fs/ess/PAS2531/emthub/Places/mahoning_business.csv"
+    fs::path(
+      emthub::ROOT,
+      "Places",
+      "mahoning_business.csv"
+    )
   ) %>%
     dplyr::mutate(
       full_addr = .data$name_address,
@@ -65,3 +75,36 @@ get_business_location <- function() {
       .data$operational_status != "CLOSED_PERMANENTLY"
     )
 }
+
+# ============================================ #
+# ---- Shapefile: Census Tract (Mahoning) ----
+# ============================================ #
+
+get_sf_ct <- function() {
+
+  sf::st_read(
+    fs::path(
+      emthub::ROOT,
+      "Shapefile",
+      "sf_census_tract.geojson"
+    )
+  ) %>%
+    dplyr::filter(
+      as.character(.data$GEOID) %in% as.character(get_disease_data()$censustract)
+    )
+}
+
+# =================================== #
+# ---- Shapefile: Zip (Mahoning) ----
+# =================================== #
+
+get_sf_zip <- function() {
+  sf::st_read(
+    fs::path(
+      emthub::ROOT,
+      "Shapefile",
+      "tl_2018_us_zcta510_for_Mahoning_County.geojson"
+    )
+  )
+}
+
