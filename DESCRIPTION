@@ -43,7 +43,8 @@ Imports:
     tibble,
     tidyr,
     tidyselect,
-    urltools
+    urltools,
+    vroom
 Depends: 
     R (>= 2.10)
 LazyData: true

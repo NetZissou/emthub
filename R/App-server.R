@@ -16,7 +16,12 @@ server <- function(input, output, session) {
 
 
   SF_ZIP <- get_sf_zip()
-  SF_CENSUS_TRACT <- get_sf_ct()
+  SF_CENSUS_TRACT <-
+    get_sf_ct() %>%
+    dplyr::filter(
+      as.character(.data$GEOID) %in% as.character(get_disease_data()$censustract)
+    )
+
   SF_DISEASE_DATA <-
     SF_CENSUS_TRACT %>%
     dplyr::left_join(DISEASE_DATA, by = c("GEOID" = "censustract"))

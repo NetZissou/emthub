@@ -31,6 +31,8 @@ ui <- function() {
 
     sidebar = NULL,
 
+    selected = "Beta",
+
     shiny::tags$head(
       # Note the wrapping of the string in HTML()
       shiny::tags$style(shiny::HTML("
