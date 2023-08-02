@@ -121,6 +121,7 @@ equityMapServer <- function(id) {
 
   shiny::moduleServer(id, function(input, output, session){
 
+    vax_provider <- get_vax_provider()
 
 
     # ======================= #
@@ -129,61 +130,43 @@ equityMapServer <- function(id) {
 
     shiny::observeEvent(input$reset, {
 
-      shiny::updateSelectInput(
-        session = session,
-        inputId = "selection_hub",
-        selected = ""
-      )
+      # Reset Select Input
+      purrr::walk(
+        .x = c(
+          "selection_hub",
+          "selection_county",
+          "selection_vax_type",
+          "selection_point_of_interest",
+          "selection_nearest_vax_by_car",
+          "selection_nearest_vax_by_transit"
+        ),
+        .f = function(id) {
 
-      shiny::updateSelectInput(
-        session = session,
-        inputId = "selection_county",
-        selected = ""
-      )
-
-      shiny::updateSelectInput(
-        session = session,
-        inputId ="selection_vax_type",
-        selected = ""
-      )
-
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "range_svi",
-        value = c(0,1)
-      )
-
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "range_hispanic_latino",
-        value = c(0,1)
-      )
-
-      shiny::updateSliderInput(
-        session = session,
-        inputId = "range_english",
-        value = c(0,1)
+          shiny::updateSelectInput(
+            session = session,
+            inputId = id,
+            selected = ""
+          )
+        }
       )
 
 
-      shiny::updateSelectInput(
-        session = session,
-        inputId = "selection_point_of_interest",
-        selected = ""
-      )
+      # Reset Slider Input
+      purrr::walk(
+        .x = c(
+          "range_svi",
+          "range_hispanic_latino",
+          "range_english"
+        ),
+        .f = function(id) {
 
-      shiny::updateSelectInput(
-        session = session,
-        inputId = "selection_nearest_vax_by_car",
-        selected = ""
+          shiny::updateSliderInput(
+            session = session,
+            inputId = id,
+            value = c(0,1)
+          )
+        }
       )
-
-      shiny::updateSelectInput(
-        session = session,
-        inputId = "selection_nearest_vax_by_transit",
-        selected = ""
-      )
-
 
     })
 
@@ -200,7 +183,44 @@ equityMapServer <- function(id) {
         # ---- Map Tiles ----
       # =================== #
       leaflet::addTiles() %>%
-        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron)
+        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+        # =================== #
+        # ---- Map Pane ----
+      # =================== #
+      leaflet::addMapPane("layer_top", zIndex=420) %>%
+        leaflet::addMapPane("layer_bottom",zIndex=410) %>%
+
+        # ====================== #
+        # ---- Vax Provider ----
+      # ======================= #
+      leaflet::addCircleMarkers(
+        data = vax_provider,
+        lat = ~latitude,
+        lng = ~longitude,
+        #label = ~ address,
+        fillColor = "gray",
+        fillOpacity = 1,
+        stroke = F,
+        group = "Vaccine Providers",
+        options = leaflet::pathOptions(pane = "layer_top")
+      ) %>%
+
+        leaflet::addLayersControl(
+          baseGroups = c(
+
+          ),
+          overlayGroups = c(
+            "Vaccine Providers"
+          ),
+          position = "topleft"
+        ) %>%
+        leaflet::hideGroup(
+          c(
+            "Vaccine Providers"
+          )
+        )
+
+
     })
 
 
