@@ -15,11 +15,21 @@ server <- function(input, output, session) {
   DISEASE_DATA <- get_disease_data()
 
 
+
   SF_ZIP <- get_sf_zip()
   SF_CENSUS_TRACT <- get_sf_ct()
   SF_DISEASE_DATA <-
     SF_CENSUS_TRACT %>%
     dplyr::left_join(DISEASE_DATA, by = c("GEOID" = "censustract"))
+
+  SF_BIRTH_OUTCOMES_DATA <-
+    SF_CENSUS_TRACT %>%
+    dplyr::left_join(
+      get_birth_outcomes() %>%
+      dplyr::filter(.data$county == "Mahoning"),
+      by = c("GEOID" = "census_tract")
+    )
+
 
 
 
@@ -444,6 +454,12 @@ server <- function(input, output, session) {
     domain = DISEASE_DATA$PovertyRate
   )
 
+  pal_birth_outcomes <- leaflet::colorFactor(
+    palette = emthub::BIRTH_OUTCOMES_PAL,
+    domain = unique(SF_BIRTH_OUTCOMES_DATA$infant_health_score_quantile),
+    reverse = FALSE
+  )
+
 
   # leaflet::leaflet() %>%
   #   leaflet::addTiles() %>%
@@ -556,6 +572,44 @@ server <- function(input, output, session) {
 
         # TODO: Process Layer ID
         layerId = ~paste0("pov_", GEOID),
+        options = leaflet::pathOptions(pane = "layer_bottom")
+      ) %>%
+      leaflet::addPolygons(
+        data = SF_BIRTH_OUTCOMES_DATA,
+        group = "Infant Health Score",
+        stroke = TRUE,
+        color = ~pal_birth_outcomes(infant_health_score_quantile),
+        weight = 1,
+        #opacity = 0.8,
+        dashArray = "3",
+        fillOpacity = 0.8,
+        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+
+        label = ~ paste0(
+          "<b>", GEOID, "</b>", "</br>", infant_health_score_quantile, " (", round(infant_health_score, 4), ")"
+        ) %>% lapply(htmltools::HTML),
+
+        labelOptions = leaflet::labelOptions(
+          style = list(
+            "font-weight" = "normal",
+            padding = "3px 8px"
+          ),
+          textsize = "15px",
+          direction = "auto"
+        ),
+
+        highlight = leaflet::highlightOptions(
+          weight = 3,
+          fillOpacity = 0.1,
+          color = "black",
+          dashArray = "",
+          opacity = 0.5,
+          bringToFront = TRUE,
+          sendToBack = TRUE
+        ),
+
+        # TODO: Process Layer ID
+        layerId = ~paste0("infant_health_score", GEOID),
         options = leaflet::pathOptions(pane = "layer_bottom")
       ) %>%
       leaflet::addPolygons(
@@ -725,10 +779,10 @@ server <- function(input, output, session) {
     # ) %>%
     leaflet::addLegend(
       "bottomright",
-      group = "Disease Outcomes Rank Score",
-      data = DISEASE_DATA,
-      pal = pal_scaled_sum_rank, values = ~scaled_rank_sum,
-      title = "Rank Score",
+      group = "Infant Health Score",
+      data = SF_BIRTH_OUTCOMES_DATA,
+      pal = pal_birth_outcomes, values = ~infant_health_score_quantile,
+      title = "Infant</br>Health Score</br>Quantile",
       opacity = 1
     ) %>%
 
@@ -741,12 +795,22 @@ server <- function(input, output, session) {
         opacity = 1
       ) %>%
 
+      leaflet::addLegend(
+        "bottomright",
+        group = "Disease Outcomes Rank Score",
+        data = DISEASE_DATA,
+        pal = pal_scaled_sum_rank, values = ~scaled_rank_sum,
+        title = "Rank Score",
+        opacity = 1
+      ) %>%
+
       leaflet::addLayersControl(
         baseGroups = c(
           "Disease Outcomes Rank Score",
           "Disease Outcomes Weighted Rank Score",
           "Poverty Rate",
-          "Accessibility"
+          "Accessibility",
+          "Infant Health Score"
         ),
         overlayGroups = c(
           "Business Location",
