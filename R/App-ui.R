@@ -31,6 +31,8 @@ ui <- function() {
 
     sidebar = NULL,
 
+    selected = "Beta",
+
     shiny::tags$head(
       # Note the wrapping of the string in HTML()
       shiny::tags$style(shiny::HTML("
@@ -178,7 +180,15 @@ ui <- function() {
     ),
     bslib::nav_panel("Data",
                      shiny::h3("Data Source Documentation")
+    ),
+
+    bslib::nav_panel(
+      "Beta",
+
+      equityMapUI("equity_map")
+
     )
+
 
   )
 }
