@@ -90,6 +90,30 @@ get_point_of_interest <- function() {
       "poi_for_ohio.csv"
     )
   )
+    # dplyr::mutate(
+    #   popup = glue::glue(
+    #     "
+    #   <h6>{name}</h6></hr>
+    #   <b>Type: </b>{type}</br>
+    #   <b>Hub: </b>{hub}</br>
+    #   <b>Addr: </b>{street_addr}, {city}, {county}, {zip}
+    #   ",
+    #     name = .data$Company,
+    #     type = .data$Type,
+    #     street_addr = .data$`Address Line 1`,
+    #     city = .data$City,
+    #     county = .data$county,
+    #     zip = .data$Zipcode,
+    #     hub = .data$hub
+    #   )
+    # ) %>%
+    # readr::write_csv(
+    #   fs::path(
+    #     emthub::ROOT,
+    #     "Places",
+    #     "poi_for_ohio.csv"
+    #   )
+    # )
 }
 
 
@@ -99,11 +123,38 @@ get_point_of_interest <- function() {
 
 
 get_SVI <- function() {
-  readr::read_csv(
+  # readr::read_csv(
+  #   fs::path(
+  #     emthub::ROOT,
+  #     "Demographic",
+  #     "rescaled_SVI.csv"
+  #   )
+  # ) %>%
+  #   dplyr::mutate(
+  #     censustract = as.character(.data$censustract)
+  #   )
+  #
+
+  # SF_CT %>%
+  #   dplyr::left_join(
+  #     svi_data,
+  #     by = c("GEOID" = "censustract")
+  #   ) %>%
+  #   dplyr::select(
+  #     GEOID, recalc_RPL_THEMES
+  #   ) %>%
+  #   sf::st_write(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Demographic",
+  #       "rescaled_SVI.geojson"
+  #     )
+  #   )
+  sf::st_read(
     fs::path(
       emthub::ROOT,
       "Demographic",
-      "rescaled_SVI.csv"
+      "rescaled_SVI.geojson"
     )
   )
 }
@@ -116,11 +167,34 @@ get_SVI <- function() {
 
 get_pct_household_limited_english <- function() {
 
-  readr::read_csv(
+  # get_sf_ct() %>%
+  #   dplyr::left_join(
+  #     readr::read_csv(
+  #       fs::path(
+  #         emthub::ROOT,
+  #         "Demographic",
+  #         "tracts_acs5_s1602_2019_prcnt_limited_english_speaking_households.csv"
+  #       )
+  #     ) %>% dplyr::mutate(censustract = as.character(censustract)),
+  #     by = c("GEOID" = "censustract")
+  #   ) %>%
+  #   dplyr::transmute(
+  #     GEOID,
+  #     prcnt_limited_english_speaking_households = as.numeric(prcnt_limited_english_speaking_households)
+  #   ) %>%
+  #   sf::st_write(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Demographic",
+  #       "tracts_acs5_s1602_2019_prcnt_limited_english_speaking_households.geojson"
+  #     )
+  #   )
+
+  sf::st_read(
     fs::path(
       emthub::ROOT,
       "Demographic",
-      "tracts_acs5_s1602_2019_prcnt_limited_english_speaking_households.csv"
+      "tracts_acs5_s1602_2019_prcnt_limited_english_speaking_households.geojson"
     )
   )
 }
@@ -144,7 +218,27 @@ get_vax_provider <- function() {
       "Vaccine",
       "cdc_vax_providers.csv"
     )
-  )
+  ) %>%
+    dplyr::mutate(
+      popup = glue::glue(
+        "
+        <h6><a href='{website}' target='_blank'>{name}</a></h6></hr>
+        <b>Type: </b>{type}</br>
+        <b>Phone: </b>{phone}</br>
+        <b>Addr: </b>{street_addr}, {city}, {county}, {zip} </br>
+        <b><a href='{prescreening_site}' target='_blank'>Prescreening</a></b></br>
+        ",
+        name = .data$Place_Name,
+        type = .data$Vaccine_Type,
+        phone = .data$Phone,
+        website = .data$Website,
+        prescreening_site = .data$Prescreening_Website,
+        street_addr = .data$Address,
+        city = .data$City,
+        county = .data$County,
+        zip = .data$Zip
+      )
+    )
 }
 
 # ===================================== #
@@ -152,11 +246,38 @@ get_vax_provider <- function() {
 # ===================================== #
 get_vax_provider_travel_time_by_car <- function() {
 
-  readr::read_csv(
+  # get_sf_ct() %>%
+  #   dplyr::left_join(
+  #     readr::read_csv(
+  #       fs::path(
+  #         emthub::ROOT,
+  #         "Vaccine",
+  #         "travel_time_to_nearest_ped_vacc_provider_by_car_2023-03-02.csv"
+  #       )
+  #     ) %>%
+  #       dplyr::transmute(
+  #         GEOID = as.character(.data$GEOID),
+  #         travel_time_to_nearest_ped_vacc_provider_by_car
+  #       ),
+  #     by = "GEOID"
+  #   ) %>%
+  #   dplyr::transmute(
+  #     .data$GEOID,
+  #     travel_time_to_nearest_ped_vacc_provider_by_car
+  #   ) %>%
+  #   sf::st_write(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Vaccine",
+  #       "travel_time_to_nearest_ped_vacc_provider_by_car_2023-03-02.geojson"
+  #     )
+  #   )
+
+  sf::st_read(
     fs::path(
       emthub::ROOT,
       "Vaccine",
-      "travel_time_to_nearest_ped_vacc_provider_by_car_2023-03-02.csv"
+      "travel_time_to_nearest_ped_vacc_provider_by_car_2023-03-02.geojson"
     )
   )
 }
@@ -164,11 +285,78 @@ get_vax_provider_travel_time_by_car <- function() {
 
 get_vax_provider_travel_time_by_transit <- function() {
 
-  readr::read_csv(
+  # get_sf_ct() %>%
+  #   dplyr::left_join(
+  #     readr::read_csv(
+  #       fs::path(
+  #         emthub::ROOT,
+  #         "Vaccine",
+  #         "travel_time_to_nearest_ped_vacc_provider_by_transit_2023-03-23.csv"
+  #       )
+  #     ) %>%
+  #       dplyr::transmute(
+  #         GEOID = as.character(.data$GEOID),
+  #         travel_time_to_nearest_ped_vacc_provider_by_transit
+  #       ),
+  #     by = "GEOID"
+  #   ) %>%
+  #   dplyr::transmute(
+  #     .data$GEOID,
+  #     travel_time_to_nearest_ped_vacc_provider_by_transit
+  #   ) %>%
+  #   sf::st_write(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Vaccine",
+  #       "travel_time_to_nearest_ped_vacc_provider_by_transit_2023-03-23.geojson"
+  #     )
+  #   )
+
+  sf::st_read(
     fs::path(
       emthub::ROOT,
       "Vaccine",
-      "travel_time_to_nearest_ped_vacc_provider_by_transit_2023-03-23.csv"
+      "travel_time_to_nearest_ped_vacc_provider_by_transit_2023-03-23.geojson"
+    )
+  )
+}
+
+
+# ======================================================== #
+# ---- COVID: County Case Rate & Booster (State-wide) ----
+# ======================================================== #
+
+get_covid_data_county<- function() {
+
+  # get_sf_county() %>%
+  # dplyr::left_join(
+  #   readr::read_csv(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Vaccine",
+  #       "Ohio_COVID_case_and_vacc_rates.csv"
+  #     )
+  #   ),
+  #   by = c("NAME" = "County")
+  # ) %>%
+  #   dplyr::select(
+  #     county = COUNTY,
+  #     caserate_last3weeks,
+  #     bivalent_booster_percentage
+  #   ) %>%
+  #   sf::st_write(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Vaccine",
+  #       "Ohio_COVID_case_and_vacc_rates.geojson"
+  #     )
+  #   )
+
+  sf::st_read(
+    fs::path(
+      emthub::ROOT,
+      "Vaccine",
+      "Ohio_COVID_case_and_vacc_rates.geojson"
     )
   )
 }
@@ -181,6 +369,16 @@ get_vax_provider_travel_time_by_transit <- function() {
 # ---- Shapefiles -----
 # ===================== #
 
+get_sf_county <- function() {
+  sf::st_read(
+    fs::path(
+      emthub::ROOT,
+      "Shapefile",
+      "sf_county_hub.geojson"
+    )
+  )
+}
+
 
 # ================================================ #
 # ---- Shapefile: Hub Boundaries (State-wide) ----
@@ -191,10 +389,40 @@ get_sf_hub <- function() {
     fs::path(
       emthub::ROOT,
       "Shapefile",
-      "HUB_Counties_07.28.2023.geojson"
+      #"HUB_Counties_07.28.2023.geojson"
+      "sf_hub.geojson"
     )
   )
 }
+
+
+# SF_HUB <-
+#   SF_HUB %>%
+#   dplyr::select(
+#     .data$HUB_Name
+#   ) %>%
+#   dplyr::group_by(.data$HUB_Name) %>%
+#   dplyr::arrange(.data$HUB_Name)
+#
+# SF_HUB %>%
+#   dplyr::group_by(.data$HUB_Name) %>%
+#   dplyr::group_map(.f = ~ sf::st_combine(.x)) %>%
+#   purrr::set_names(unique(SF_HUB$HUB_Name)) %>%
+#   dplyr::bind_rows() %>%
+#   tidyr::pivot_longer(
+#     dplyr::everything(), names_to = "HUB_Name", values_to = "geometry"
+#   ) %>%
+#   sf::st_as_sf() %>%
+#   sf::st_write(
+#     fs::path(
+#       emthub::ROOT,
+#       "Shapefile",
+#       #"HUB_Counties_07.28.2023.geojson"
+#       "sf_hub.geojson"
+#     )
+#   )
+
+
 
 # ============================================== #
 # ---- Shapefile: Census Tract (State-wide) ----

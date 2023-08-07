@@ -184,7 +184,7 @@ ui <- function() {
 
     bslib::nav_panel(
       "Beta",
-
+      waiter::autoWaiter(),
       equityMapUI("equity_map")
 
     )
