@@ -217,9 +217,11 @@ get_vax_provider <- function() {
       emthub::ROOT,
       "Vaccine",
       "cdc_vax_providers.csv"
-    )
+    ),
+    lazy = TRUE
   ) %>%
     dplyr::mutate(
+      Census_Tract = as.character(.data$Census_Tract),
       popup = glue::glue(
         "
         <h6><a href='{website}' target='_blank'>{name}</a></h6></hr>

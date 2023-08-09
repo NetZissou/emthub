@@ -23,7 +23,7 @@ equityMapUItest <- function(id) {
       # ),
 
       bslib::card_body(
-        min_height = 80,
+        min_height = 50,
         bslib::layout_column_wrap(
           width = 1/2,
           shiny::actionButton(
@@ -213,33 +213,60 @@ equityMapUI <- function(id) {
       ),
       bslib::nav_panel(
         title = "Vaccine Providers",
-        bslib::card_body(
-          min_height = 20,
-          bslib::layout_column_wrap(
-            width = 1/2,
-            shiny::selectInput(
-              shiny::NS(id, "selection_vax_provider_type"),
-              label = "Type",
-              choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_type,
-              multiple = TRUE
-            ),
-
-            shiny::selectInput(
-              shiny::NS(id, "selection_vax_provider_hub"),
-              label = "Hub",
-              choices = NULL,
-              multiple = TRUE
-            )
-
-          )
-        ),
 
         bslib::card_body(
+          shiny::selectInput(
+            shiny::NS(id, "selection_vax_provider_type"),
+            label = "Type",
+            choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_type,
+            multiple = TRUE
+          ),
+
+          shiny::selectInput(
+            shiny::NS(id, "selection_vax_ct"),
+            label = "Census Tract",
+            choices = emthub::EQUITY_MAP_FILTER_CHOICES$ct,
+            multiple = TRUE
+          ),
+
+          shiny::selectInput(
+            shiny::NS(id, "selection_vax_city"),
+            label = "City",
+            choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_city,
+            multiple = TRUE
+          ),
+
+          shiny::selectInput(
+            shiny::NS(id, "selection_vax_zip"),
+            label = "Zip Code",
+            choices = emthub::EQUITY_MAP_FILTER_CHOICES$zip,
+            multiple = TRUE
+          ),
+
+          shiny::selectInput(
+            shiny::NS(id, "selection_vax_county"),
+            label = "County",
+            choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
+            multiple = TRUE
+          ),
+
+          shiny::selectInput(
+            shiny::NS(id, "selection_vax_provider_hub"),
+            label = "Hub",
+            choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
+            multiple = TRUE
+          ),
+
+          shiny::actionButton(
+            shiny::NS(id, "update_vax_provider_tbl"),
+            label = "Find Provider"
+          ),
           shiny::tags$hr(),
           shiny::helpText("Toggle to add places to the map"),
           reactable::reactableOutput(shiny::NS(id, "vax_provider_table"))
         )
       ),
+
 
       bslib::nav_panel(
         title = "Places",
@@ -319,6 +346,9 @@ equityMapServer <- function(id) {
 
     # > Point Level
     vax_provider <- get_vax_provider()
+    vax_provider_reactive <- shiny::reactiveValues(
+      filtered = NULL
+    )
     #point_of_interest <-get_point_of_interest()
     svi_data <- get_SVI()
 
@@ -444,31 +474,85 @@ equityMapServer <- function(id) {
     # ======================= #
     # ---- Apply Filters ----
     # ======================= #
-    update_vax_provider <- function(type) {
+    update_vax_provider <- function(
+      type, ct, city, zip, county, hub
+    ) {
 
-      leaflet::leafletProxy("equity_map") %>%
-        leaflet::clearGroup( "Vaccine Providers") %>%
-        leaflet::addCircleMarkers(
-          data = vax_provider %>%
-            dplyr::filter(.data$Vaccine_Type %in% type),
-          lat = ~latitude,
-          lng = ~longitude,
-          label = ~Place_Name,
-          popup = ~popup,
-          labelOptions = leaflet::labelOptions(
-            style = list(
-              "font-weight" = "normal",
-              padding = "3px 8px"
-            ),
-            textsize = "15px",
-            direction = "auto"
-          ),
-          fillColor = "gray",
-          fillOpacity = 1,
-          stroke = F,
-          group = "Vaccine Providers",
-          options = leaflet::pathOptions(pane = "layer_top")
-        )
+
+
+
+      # leaflet::leafletProxy("equity_map") %>%
+      #   leaflet::clearGroup( "Vaccine Providers") %>%
+      #   leaflet::addCircleMarkers(
+      #     data = vax_provider %>%
+      #       dplyr::filter(.data$Vaccine_Type %in% type),
+      #     lat = ~latitude,
+      #     lng = ~longitude,
+      #     label = ~Place_Name,
+      #     popup = ~popup,
+      #     labelOptions = leaflet::labelOptions(
+      #       style = list(
+      #         "font-weight" = "normal",
+      #         padding = "3px 8px"
+      #       ),
+      #       textsize = "15px",
+      #       direction = "auto"
+      #     ),
+      #     fillColor = "gray",
+      #     fillOpacity = 1,
+      #     stroke = F,
+      #     group = "Vaccine Providers",
+      #     options = leaflet::pathOptions(pane = "layer_top")
+      #   )
+
+      filtered <- vax_provider
+
+      if (!rlang::is_empty(input$selection_vax_provider_type)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$Vaccine_Type %in% input$selection_vax_provider_type
+          )
+      }
+
+      if (!rlang::is_empty(input$selection_vax_ct)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$Census_Tract %in% input$selection_vax_ct
+          )
+      }
+
+      if (!rlang::is_empty(input$selection_vax_zip)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$Zip %in% input$selection_vax_zip
+          )
+      }
+
+      if (!rlang::is_empty(input$selection_vax_county)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$City %in% input$selection_vax_county
+          )
+      }
+
+      if (!rlang::is_empty(input$selection_vax_provider_hub)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$hub %in% input$selection_vax_provider_hub
+          )
+      }
+
+      vax_provider_reactive$filtered <- filtered
     }
 
 
@@ -909,24 +993,102 @@ equityMapServer <- function(id) {
     })
 
 
-    # output$vax_provider_table <- reactable::renderReactable({
-    #
-    #   vax_provider %>%
-    #     reactable::reactable(
-    #       # Table Format
-    #       filterable = TRUE,
-    #       outlined = TRUE,
-    #       # Selection
-    #       selection = "multiple", onClick = "select",
-    #       highlight = TRUE,
-    #       theme = reactable::reactableTheme(
-    #         rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
-    #       ),
-    #       # Table Size
-    #       defaultPageSize = 5, minRows = 5
-    #     )
-    # })
+    shiny::observeEvent(input$update_vax_provider_tbl, {
 
+      update_vax_provider(
+        input$selection_vax_provider_type,
+        input$selection_vax_ct,
+        input$selection_vax_city,
+        input$selection_vax_zip,
+        input$selection_vax_county,
+        input$selection_vax_provider_hub
+      )
+    })
+
+
+    output$vax_provider_table <- reactable::renderReactable({
+      shiny::req(!rlang::is_empty(vax_provider_reactive$filtered))
+
+      vax_provider_reactive$filtered %>%
+        dplyr::select(
+          Name = .data$Place_Name,
+          Type = .data$Vaccine_Type,
+          Phone = .data$Phone,
+          Website = .data$Website,
+          Prescreening = .data$Website,
+          Hub = .data$hub,
+          Address = .data$Address,
+          City = .data$City,
+          County = .data$County,
+          State = .data$State,
+          Zip = .data$Zip,
+          `Census Tract` = .data$Census_Tract
+        ) %>%
+        reactable::reactable(
+          # Table Format
+          filterable = TRUE,
+          outlined = TRUE,
+          # Selection
+          selection = "multiple", onClick = "select",
+          highlight = TRUE,
+          theme = reactable::reactableTheme(
+            rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+          ),
+          # Table Size
+          defaultPageSize = 5, minRows = 5
+        )
+    })
+
+    selected_vax_provider_index <- shiny::reactive(reactable::getReactableState("vax_provider_table", "selected"))
+    selected_vax_provider <- shiny::reactiveValues(value = NULL)
+    shiny::observe({
+
+      if (!is.null(selected_vax_provider_index())) {
+
+        selected_vax_provider$value <-
+          vax_provider_reactive$filtered[selected_vax_provider_index(),]
+
+
+      } else {
+        selected_vax_provider$value <- NULL
+      }
+
+
+      if (!rlang::is_empty(selected_vax_provider$value)) {
+
+        leaflet::leafletProxy("equity_map") %>%
+          leaflet.extras2::addSpinner() %>%
+          leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+          leaflet::clearGroup("Vaccine Providers") %>%
+          leaflet::addAwesomeMarkers(
+            data = selected_vax_provider$value,
+            group = "Vaccine Providers",
+            lng = ~longitude, lat = ~latitude,
+            icon = leaflet::makeAwesomeIcon(
+              text = fontawesome::fa("house-medical"),
+              iconColor = 'black',
+              markerColor = "blue"
+            ),
+            popup = ~popup,
+            labelOptions = leaflet::labelOptions(
+              style = list(
+                "font-size" = "15px",
+                "font-style" = "bold",
+                "border-color" = "rgba(0,0,0,0.5)"
+              )
+            ),
+            options = leaflet::pathOptions(pane = "layer_top")
+          ) %>%
+          leaflet.extras2::stopSpinner()
+
+      } else {
+
+        leaflet::leafletProxy("equity_map") %>%
+          leaflet::clearGroup("Vaccine Providers")
+      }
+
+      #print(selected_business$value)
+    })
 
 
     # ==================== #
@@ -1298,7 +1460,6 @@ equityMapServer <- function(id) {
         leaflet::hideGroup(
           c(
             "Hub Service Area",
-            "Vaccine Providers",
             "Point of Interest"
           )
         )

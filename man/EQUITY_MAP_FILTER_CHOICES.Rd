@@ -5,7 +5,7 @@
 \alias{EQUITY_MAP_FILTER_CHOICES}
 \title{EQUITY_MAP_FILTER_CHOICES}
 \format{
-An object of class \code{list} of length 6.
+An object of class \code{list} of length 9.
 }
 \usage{
 EQUITY_MAP_FILTER_CHOICES
