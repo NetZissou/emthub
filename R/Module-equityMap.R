@@ -137,18 +137,22 @@ equityMapUI <- function(id) {
       bslib::card_header(
         bslib::card_body(
           min_height = 60,
-          bslib::layout_column_wrap(
-            width = 1/2,
-            shiny::actionButton(
-              shiny::NS(id, "apply"),
-              label = "Apply"
-            ),
-
-            shiny::actionButton(
-              shiny::NS(id, "reset"),
-              label = "Reset"
-            )
+          shiny::actionButton(
+            shiny::NS(id, "reset"),
+            label = "Reset"
           )
+          # bslib::layout_column_wrap(
+          #   width = 1/2,
+          #   shiny::actionButton(
+          #     shiny::NS(id, "apply"),
+          #     label = "Apply"
+          #   ),
+          #
+          #   shiny::actionButton(
+          #     shiny::NS(id, "reset"),
+          #     label = "Reset"
+          #   )
+          # )
         )
       ),
       bslib::nav_panel(
@@ -243,6 +247,55 @@ equityMapUI <- function(id) {
 
 
         )
+      ),
+
+      bslib::nav_panel(
+        title = "ISO",
+        bslib::card_body(
+          shiny::textInput(
+            shiny::NS(id, "iso_location"),
+            label = "Full Address",
+            placeholder = "street, city, state, zip"
+          ),
+
+          shiny::numericInput(
+            shiny::NS(id, "iso_lat"),
+            label = "Latitude ",
+            value = NULL
+          ),
+          shiny::numericInput(
+            shiny::NS(id, "iso_lng"),
+            label = "Longitude ",
+            value = NULL
+          ),
+          shiny::helpText("Click location on the map to obtain lat, lng. Leave empty if full address is provided."),
+
+          shiny::selectInput(
+            shiny::NS(id, "iso_range_type"),
+            label = "Measurement",
+            choices = c("distance", "time"),
+            multiple = FALSE
+          ),
+
+          shiny::numericInput(
+            shiny::NS(id, "iso_range"),
+            label = "Range (min/km)",
+            value = 5
+          ),
+
+          shiny::selectInput(
+            shiny::NS(id, "iso_type"),
+            label = "Transportation Type",
+            choices = c("car", "walk", "cycle"),
+            multiple = FALSE
+          ),
+
+          shiny::actionButton(
+            shiny::NS(id, "iso_add"),
+            label = "Add Isochrones"
+          )
+
+        )
       )
     )
 
@@ -334,6 +387,7 @@ equityMapServer <- function(id) {
 
     shiny::observeEvent(input$reset, {
 
+      shiny::showNotification("Map Resetting ...", type = "message")
       # Reset Select Input
       purrr::walk(
         .x = c(
@@ -383,6 +437,8 @@ equityMapServer <- function(id) {
       update_vax_provider_travel_time_by_car(input$selection_nearest_vax_by_car)
       update_vax_provider_travel_time_by_transit(input$selection_nearest_vax_by_transit)
 
+
+      #shiny::showNotification("Completed", type = "message")
     })
 
     # ======================= #
@@ -418,7 +474,7 @@ equityMapServer <- function(id) {
 
     update_HUB_highlight <- function(hub) {
 
-      if (!rlang::is_empty(hub) && hub != "") {
+      if (!rlang::is_empty(hub) && all(hub != "")) {
         SF_HUB_highlight <-
           SF_HUB %>%
           dplyr::filter(
@@ -470,7 +526,7 @@ equityMapServer <- function(id) {
 
     update_county_highlight <- function(county) {
 
-      if (!rlang::is_empty(county) && county != "") {
+      if (!rlang::is_empty(county) && all(county != "")) {
         SF_COUNTY_highlight <-
           SF_COUNTY %>%
           dplyr::filter(
@@ -531,6 +587,8 @@ equityMapServer <- function(id) {
         )
 
       leaflet::leafletProxy("equity_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
         leaflet::clearGroup("Social Vulnerability Index (2018)") %>%
         leaflet::addPolygons(
           data = svi_data_filtered,
@@ -566,7 +624,8 @@ equityMapServer <- function(id) {
             sendToBack = TRUE
           ),
           options = leaflet::pathOptions(pane = "layer_bottom")
-        )
+        ) %>%
+        leaflet.extras2::stopSpinner()
     }
 
     update_household_english <- function(range) {
@@ -580,6 +639,8 @@ equityMapServer <- function(id) {
         )
 
       leaflet::leafletProxy("equity_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
         leaflet::clearGroup("Pct Households Speaking Limited English") %>%
         leaflet::addPolygons(
           data = household_english_data_filtered,
@@ -617,12 +678,13 @@ equityMapServer <- function(id) {
             sendToBack = TRUE
           ),
           options = leaflet::pathOptions(pane = "layer_bottom")
-        )
+        ) %>%
+        leaflet.extras2::stopSpinner()
     }
 
     update_vax_provider_travel_time_by_car <- function(type) {
 
-      if (!rlang::is_empty(type) && type != "") {
+      if (!rlang::is_empty(type) && all(type != "")) {
 
         vax_provider_travel_time_by_car_filtered <-
           vax_provider_travel_time_by_car %>%
@@ -635,6 +697,8 @@ equityMapServer <- function(id) {
       }
 
       leaflet::leafletProxy("equity_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
         leaflet::clearGroup("Min. (Car) to Nearest Pediatric Vax Provider") %>%
         leaflet::addPolygons(
           data = vax_provider_travel_time_by_car_filtered,
@@ -672,14 +736,15 @@ equityMapServer <- function(id) {
             sendToBack = TRUE
           ),
           options = leaflet::pathOptions(pane = "layer_bottom")
-        )
+        ) %>%
+        leaflet.extras2::stopSpinner()
 
     }
 
 
     update_vax_provider_travel_time_by_transit <- function(type) {
 
-      if (!rlang::is_empty(type) && type != "") {
+      if (!rlang::is_empty(type) && all(type != "")) {
 
         vax_provider_travel_time_by_transit_filtered <-
           vax_provider_travel_time_by_transit %>%
@@ -692,6 +757,8 @@ equityMapServer <- function(id) {
       }
 
       leaflet::leafletProxy("equity_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
         leaflet::clearGroup("Min. (Tranist) to Nearest Pediatric Vax Provider") %>%
         leaflet::addPolygons(
           data = vax_provider_travel_time_by_transit_filtered,
@@ -729,7 +796,8 @@ equityMapServer <- function(id) {
             sendToBack = TRUE
           ),
           options = leaflet::pathOptions(pane = "layer_bottom")
-        )
+        ) %>%
+        leaflet.extras2::stopSpinner()
     }
     # update_point_of_interest <- function(type) {
     #
@@ -800,6 +868,47 @@ equityMapServer <- function(id) {
     shiny::observe({
       update_vax_provider_travel_time_by_transit(input$selection_nearest_vax_by_transit)
     })
+
+    shiny::observeEvent(input$iso_add, {
+      shiny::req(!rlang::is_empty(input$iso_range_type))
+
+      # Change Units
+      if (input$iso_range_type == "distance") {
+        # To KM
+        range <- input$iso_range*1000
+      } else {
+        # To Sec
+        range <- input$iso_range*60
+      }
+
+      addISO(
+        map_id = "equity_map",
+        full_address = input$iso_location,
+        location = c(input$iso_lng, input$iso_lat),
+        range = range,
+        range_type = input$iso_range_type,
+        type = input$iso_type
+      )
+    })
+
+    shiny::observe({
+
+      click <- input$equity_map_click
+
+      shiny::updateNumericInput(
+        session = session,
+        inputId = "iso_lat",
+        value = click$lat
+      )
+
+      shiny::updateNumericInput(
+        session = session,
+        inputId = "iso_lng",
+        value = click$lng
+      )
+    })
+
+
     # output$vax_provider_table <- reactable::renderReactable({
     #
     #   vax_provider %>%
@@ -928,8 +1037,8 @@ equityMapServer <- function(id) {
         ),
         options = leaflet::pathOptions(pane = "layer_bottom")
       ) %>%
-      # ====================== #
-      # ---- Booster Rate ----
+        # ====================== #
+        # ---- Booster Rate ----
       # ====================== #
       leaflet::addPolygons(
         data = covid_data,
@@ -968,8 +1077,8 @@ equityMapServer <- function(id) {
         ),
         options = leaflet::pathOptions(pane = "layer_bottom")
       ) %>%
-      # ========================== #
-      # ---- HUB Service Area ----
+        # ========================== #
+        # ---- HUB Service Area ----
       # ========================== #
 
       leaflet::addPolygons(
@@ -1181,7 +1290,8 @@ equityMapServer <- function(id) {
           overlayGroups = c(
             "Hub Service Area",
             "Vaccine Providers",
-            "Point of Interest"
+            "Point of Interest",
+            "Isochron"
           ),
           position = "topleft"
         ) %>%
