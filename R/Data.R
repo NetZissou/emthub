@@ -361,6 +361,27 @@ get_covid_data_county<- function() {
   )
 }
 
+# ======================== #
+# ---- Birth Outcomes ----
+# ======================== #
+
+get_birth_outcomes <- function() {
+  readr::read_csv(
+    #"/fs/ess/PAS2531/emthub/Demographic/birth_outcomes.csv"
+    fs::path(
+      emthub::ROOT,
+      "Demographic",
+      "birth_outcomes.csv"
+    )
+  ) %>%
+    purrr::set_names(
+      c("census_tract", "ocoi_quantile", "county", "infant_health_score_quantile", "infant_health_score", "ocoi")
+    ) %>%
+    dplyr::mutate(
+      census_tract = as.character(.data$census_tract)
+    )
+}
+
 
 
 
