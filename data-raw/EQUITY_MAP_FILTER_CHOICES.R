@@ -14,6 +14,11 @@ CHOICES_COUNTY <- sort(unique(SF_COUNTY$COUNTY))
 CHOICES_ZIP <- sort(as.character(unique(SF_ZIP$GEOID10)))
 
 CHOICES_VAX_TYPE <- sort(unique(vax_provider$Vaccine_Type))
+names(CHOICES_VAX_TYPE) <- c(
+  "Pfizer-BioNTech - Age 12+ years",
+  "Pfizer-BioNTech -  Age 5 to 11 years",
+  "Moderna - Age 18+"
+)
 CHOICES_VAX_CITY <- sort(unique(vax_provider$City))
 
 CHOICES_POINT_OF_INTEREST <-
@@ -31,7 +36,9 @@ EQUITY_MAP_FILTER_CHOICES <-
     ct = CHOICES_CT,
     county = CHOICES_COUNTY,
     zip = CHOICES_ZIP,
-    vax_type = CHOICES_VAX_TYPE,
+    vax_type = c(
+      CHOICES_VAX_TYPE
+    ),
     vax_city = CHOICES_VAX_CITY,
     point_of_interest = CHOICES_POINT_OF_INTEREST,
     nearest_vax_by_car = CHOICES_NEAREST_VAX_BY_CAR,

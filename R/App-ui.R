@@ -1,18 +1,5 @@
 
-shiny_gauge <- function(value, min = 0, max = 1) {
-  shiny::tagList(
-    # tags$label(
-    #   `for` = id,
-    #   paste0(label, ": ", value)
-    # ),
-    shiny::tags$meter(
-      #id = id,
-      value = value,
-      min = min,
-      max = max
-    )
-  )
-}
+
 
 #' User Interface for EMT application
 #'
@@ -31,7 +18,7 @@ ui <- function() {
 
     sidebar = NULL,
 
-    selected = "Beta",
+    selected = "Equity Map",
 
     shiny::tags$head(
       # Note the wrapping of the string in HTML()

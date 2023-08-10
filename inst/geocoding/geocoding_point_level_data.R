@@ -18,7 +18,7 @@ furrr_result_vax <-
     .y = vax_provider$longitude,
     .f = geocoder::geocoding_sf,
     sf = SF_HUB,
-    id = "GEOID",
+    id = "HUB_Name",
     .progress = TRUE
   )
 # =========================== #

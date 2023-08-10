@@ -37,7 +37,7 @@ Imports:
     leaflet.extras2,
     magrittr,
     purrr,
-    reactable,
+    reactable (>= 0.4.4),
     readr,
     rlang,
     sf,
