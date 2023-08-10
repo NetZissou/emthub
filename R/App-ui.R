@@ -18,7 +18,7 @@ ui <- function() {
 
     sidebar = NULL,
 
-    selected = "Equity Map",
+    selected = "Disease Outcomes Map",
 
     shiny::tags$head(
       # Note the wrapping of the string in HTML()
@@ -30,147 +30,14 @@ ui <- function() {
 
     bslib::nav_panel(
       "Disease Outcomes Map",
-
-      bslib::navset_card_tab(
-        title = NULL,
-        bslib::nav_panel(
-          "Map",
-          #card_title("Map"),
-          bslib::layout_columns(
-            bslib::card(
-
-              bslib::card_body(
-                class = "p-0",
-                leaflet::leafletOutput("index_map")
-              ),
-              full_screen = TRUE
-            ),
-            bslib::card(
-              full_screen = TRUE,
-              bslib::navset_pill(
-                bslib::nav_panel(
-                  'Info',
-                  shiny::htmlOutput("index_map_info")
-                ),
-                bslib::nav_panel(
-                  'Places',
-
-                  bslib::layout_column_wrap(
-                    width = 1/2,
-                    shiny::selectInput(
-                      inputId = "filter_ct",
-                      label = "Census Tract",
-                      choices = emthub::FILTER_CT_CHOICES,
-                      multiple = TRUE
-                    ),
-
-                    shiny::selectInput(
-                      inputId = "filter_zip",
-                      label = "Zip",
-                      choices = emthub::FILTER_ZIP_CHOICES,
-                      multiple = TRUE
-                    ),
-                    shiny::selectInput(
-                      inputId = "filter_city",
-                      label = "City",
-                      choices = emthub::FILTER_CITY_CHOICES,
-                      multiple = TRUE
-                    ),
-
-                    shiny::selectInput(
-                      inputId = "filter_type",
-                      label = "Type",
-                      choices = emthub::FILTER_TYPE_CHOICES,
-                      multiple = TRUE
-                    ),
-                  ),
-
-                  shiny::actionButton(
-                    inputId = "apply_filter_business",
-                    label = "Apply Filters"
-                  ),
-
-                  shiny::tags$hr(),
-                  shiny::helpText("Toggle to add places to the map"),
-                  reactable::reactableOutput("business_table")
-                ),
-
-                bslib::nav_panel(
-                  "Accessibility",
-
-                  bslib::card(
-                    height = 500,
-
-                    shiny::selectInput(
-                      inputId = "filter_acc_type",
-                      label = "Business Type",
-                      choices = emthub::ACC_BUSINESS_TYPE,
-                      multiple = FALSE
-                    ),
-
-                    shiny::selectInput(
-                      inputId = "filter_transportation_method",
-                      label = "Transportation Methods",
-                      choices = emthub::ACC_TRANSPORTATION_METHODS,
-                      multiple = FALSE
-                    ),
-
-                    shiny::actionButton(
-                      inputId = "apply_filter_acc",
-                      label = "Apply Filters"
-                    )
-                  )
-
-
-                )
-              )
-            ),
-            col_widths = c(8,4)
-
-          )
-        ),
-
-        bslib::nav_panel(
-          "Controls",
-          sortable::bucket_list(
-            header = "Disease Outcomes of Interest",
-            group_name = "bucket_list_group",
-            orientation = "horizontal",
-
-            sortable::add_rank_list(
-              text = "Outcomes",
-              labels = emthub::DISEASE_OUTCOMES,
-              input_id = "outcomes"
-            ),
-            sortable::add_rank_list(
-              text = "Tier 1",
-              labels = NULL,
-              input_id = "rank_list_1"
-            ),
-            sortable::add_rank_list(
-              text = "Tier 2",
-              labels = NULL,
-              input_id = "rank_list_2"
-            ),
-            sortable::add_rank_list(
-              text = "Tier 3",
-              labels = NULL,
-              input_id = "rank_list_3"
-            ),
-            options = sortable::sortable_options(multiDrag = TRUE)
-          )
-        )
-
-
-      )
-
+      diseaseOutcomesUI("disease_outcomes")
     ),
     bslib::nav_panel("Data",
                      shiny::h3("Data Source Documentation")
     ),
 
     bslib::nav_panel(
-      "Beta",
+      "Equity Map",
       waiter::autoWaiter(),
       equityMapUI("equity_map")
 
