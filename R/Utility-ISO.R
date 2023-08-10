@@ -115,13 +115,13 @@ addISO <- function(
   # ---- Meta Data for Map ----
   # =========================== #
 
-  if (range == "distance") {
+  if (range_type == "distance") {
     # To KM
-    range_label <- range/1000
+    range_label <- round(range/1000, 1)
     range_type_label <- "KM"
   } else {
     # To Sec
-    range_label <- range/60
+    range_label <- rount(range/60, 0)
     range_type_label <- "Mins"
   }
 

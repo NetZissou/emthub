@@ -1193,35 +1193,12 @@ equityMapServer <- function(id) {
       # =================== #
       leaflet::addTiles() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+        leaflet::addProviderTiles(leaflet::providers$Esri, group = "Base Map") %>%
         # =================== #
         # ---- Map Pane ----
       # =================== #
       leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%
-
-        # ====================== #
-        # ---- Vax Provider ----
-      # ======================= #
-      # leaflet::addCircleMarkers(
-      #   data = vax_provider,
-      #   lat = ~latitude,
-      #   lng = ~longitude,
-      #   label = ~Place_Name,
-      #   popup = ~popup,
-      #   labelOptions = leaflet::labelOptions(
-      #     style = list(
-      #       "font-weight" = "normal",
-      #       padding = "3px 8px"
-      #     ),
-      #     textsize = "15px",
-      #     direction = "auto"
-      #   ),
-      #   fillColor = "gray",
-      #   fillOpacity = 1,
-      #   stroke = F,
-      #   group = "Vaccine Providers",
-      #   options = leaflet::pathOptions(pane = "layer_top")
-      # ) %>%
 
       # =========================== #
       # ---- Point of Interest ----
@@ -1535,7 +1512,8 @@ equityMapServer <- function(id) {
             "County Bivalent Booster Uptake",
             "Pct Households Speaking Limited English",
             "Min. (Car) to Nearest Pediatric Vax Provider",
-            "Min. (Tranist) to Nearest Pediatric Vax Provider"
+            "Min. (Tranist) to Nearest Pediatric Vax Provider",
+            "Base Map"
           ),
           overlayGroups = c(
             "Hub Service Area",
