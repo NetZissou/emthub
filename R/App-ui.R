@@ -8,6 +8,7 @@
 ui <- function() {
 
   bslib::page_navbar(
+    id = "emt",
     title = "EMT Hub Dashboard",
 
     theme = bslib::bs_theme(
@@ -30,10 +31,13 @@ ui <- function() {
 
     bslib::nav_panel(
       "Disease Outcomes Map",
+      waiter::waiterPreloader(
+        html = shiny::tagList(
+          waiter::spin_flower(),
+          shiny::h4("Launching EMT ...")
+        )
+      ),
       diseaseOutcomesUI("disease_outcomes")
-    ),
-    bslib::nav_panel("Data",
-                     shiny::h3("Data Source Documentation")
     ),
 
     bslib::nav_panel(
@@ -41,9 +45,11 @@ ui <- function() {
       waiter::autoWaiter(),
       equityMapUI("equity_map")
 
+    ),
+
+    bslib::nav_panel("Data",
+                     shiny::h3("Data Source Documentation")
     )
-
-
   )
 }
 

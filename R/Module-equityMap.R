@@ -159,6 +159,7 @@ equityMapUI <- function(id) {
         title = "Layers Control",
 
         bslib::card_body(
+
           shiny::actionButton(
             shiny::NS(id, "reset"),
             label = "Reset"
