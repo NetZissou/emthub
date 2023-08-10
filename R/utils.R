@@ -161,5 +161,41 @@ cut_time_label <- function(time, type = c("car", "walk", "transit")) {
   purrr::map_chr(time, purrr::safely(unit_func, otherwise = NA))
 }
 
+reactable_csvDownloadButton <- function(id, filename = "data.csv", label = "Download as CSV") {
+  shiny::tags$button(
+    shiny::tagList(shiny::icon("download"), label),
+    onclick = sprintf("Reactable.downloadDataCSV('%s', '%s')", id, filename)
+  )
+}
 
+reactable_searchBar <- function(id, placeholder = "Search ...") {
+  shiny::div(
+    style = "margin-bottom: 0.75rem",
+    shiny::tags$input(
+      type = "text",
+      placeholder = placeholder,
+      style = "padding: 0.25rem 0.5rem; width: 100%",
+      oninput = glue::glue(
+        "Reactable.setSearch('{id}', this.value)",
+        id = id
+      )
+    ))
+}
+
+
+
+shiny_gauge <- function(value, min = 0, max = 1) {
+  shiny::tagList(
+    # tags$label(
+    #   `for` = id,
+    #   paste0(label, ": ", value)
+    # ),
+    shiny::tags$meter(
+      #id = id,
+      value = value,
+      min = min,
+      max = max
+    )
+  )
+}
 

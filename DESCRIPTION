@@ -24,16 +24,20 @@ Imports:
     crosstalk,
     devtools,
     dplyr,
+    fontawesome,
     fs,
     ggplot2,
     glue,
     HatchedPolygons (>= 0.2.0.9000),
     highcharter,
     htmltools,
+    httr2,
     leaflet,
+    leaflet.extras,
+    leaflet.extras2,
     magrittr,
     purrr,
-    reactable,
+    reactable (>= 0.4.4),
     readr,
     rlang,
     sf,
@@ -41,9 +45,12 @@ Imports:
     sortable,
     stringr,
     tibble,
+    tidygeocoder,
     tidyr,
     tidyselect,
-    urltools
+    urltools,
+    vroom,
+    waiter
 Depends: 
     R (>= 2.10)
 LazyData: true
