@@ -121,7 +121,7 @@ addISO <- function(
     range_type_label <- "KM"
   } else {
     # To Sec
-    range_label <- rount(range/60, 0)
+    range_label <- round(range/60, 0)
     range_type_label <- "Mins"
   }
 
