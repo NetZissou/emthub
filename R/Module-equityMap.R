@@ -436,7 +436,7 @@ equityMapUI <- function(id) {
 
 }
 
-equityMapServer <- function(id) {
+equityMapServer <- function(id, ct_level_data) {
 
   shiny::moduleServer(id, function(input, output, session){
 
@@ -456,17 +456,24 @@ equityMapServer <- function(id) {
       filtered = NULL
     )
     #point_of_interest <-get_point_of_interest()
-    svi_data <- get_SVI()
+
 
     # > Regional Rate
     # > County Level
     covid_data <- get_covid_data_county()
+
     # > Census Tract Level
-    household_english_data <- get_pct_household_limited_english()
-    vax_provider_travel_time_by_car <-
-      get_vax_provider_travel_time_by_car()
-    vax_provider_travel_time_by_transit <-
-      get_vax_provider_travel_time_by_transit()
+    # NOTE: USE ct_level_data()
+
+    # svi_data <- get_SVI()
+    # household_english_data <- get_pct_household_limited_english()
+    # vax_provider_travel_time_by_car <-
+    #   get_vax_provider_travel_time_by_car()
+    # vax_provider_travel_time_by_transit <-
+    #   get_vax_provider_travel_time_by_transit()
+
+
+
 
 
     # > Pal
@@ -478,44 +485,22 @@ equityMapServer <- function(id) {
     #   )
 
     pal_svi <-
-      leaflet::colorNumeric(
-        palette = "Reds",
-        domain = svi_data$recalc_RPL_THEMES
-      )
+      emthub::PAL$pal_svi
 
     pal_household_english <-
-      leaflet::colorNumeric(
-        palette = "Purples",
-        domain = household_english_data$prcnt_limited_english_speaking_households
-      )
+      emthub::PAL$pal_household_english
 
     pal_covid_case_rate <-
-      leaflet::colorNumeric(
-        palette = "OrRd",
-        domain = covid_data$caserate_last3weeks
-      )
+      emthub::PAL$pal_covid_case_rate
 
     pal_booster_rate <-
-      leaflet::colorNumeric(
-        palette = "YlGn",
-        domain = covid_data$bivalent_booster_percentage
-      )
+      emthub::PAL$pal_booster_rate
 
     pal_vax_provider_travel_time_by_car <-
-      leaflet::colorFactor(
-        palette = c("#fdae6b", "#e6550d"),
-        domain = unique(vax_provider_travel_time_by_car$travel_time_to_nearest_ped_vacc_provider_by_car),
-        levels = unique(vax_provider_travel_time_by_car$travel_time_to_nearest_ped_vacc_provider_by_car),
-        ordered = TRUE
-      )
+      emthub::PAL$pal_vax_provider_travel_time_by_car
 
     pal_vax_provider_travel_time_by_transit <-
-      leaflet::colorFactor(
-        palette = c("#feedde", "#d94701", "#fdbe85", "#fd8d3c"),
-        domain = unique(vax_provider_travel_time_by_transit$travel_time_to_nearest_ped_vacc_provider_by_transit),
-        levels = unique(vax_provider_travel_time_by_transit$travel_time_to_nearest_ped_vacc_provider_by_transit),
-        ordered = TRUE
-      )
+      emthub::PAL$pal_vax_provider_travel_time_by_transit
 
     # ======================= #
     # ---- Reset Filters ----
@@ -752,10 +737,11 @@ equityMapServer <- function(id) {
 
 
       svi_data_filtered <-
-        svi_data %>%
+        ct_level_data() %>%
+        dplyr::select(.data$GEOID, .data$recalc_svi_2018) %>%
         dplyr::filter(
-          .data$recalc_RPL_THEMES >= range[1],
-          .data$recalc_RPL_THEMES <= range[2],
+          .data$recalc_svi_2018 >= range[1],
+          .data$recalc_svi_2018 <= range[2],
         )
 
       leaflet::leafletProxy("equity_map") %>%
@@ -766,7 +752,7 @@ equityMapServer <- function(id) {
           data = svi_data_filtered,
           group = "Social Vulnerability Index (2018)",
           stroke = TRUE,
-          color = ~pal_svi(recalc_RPL_THEMES),
+          color = ~pal_svi(recalc_svi_2018),
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
@@ -774,7 +760,7 @@ equityMapServer <- function(id) {
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
-            "<b>", GEOID, "</b>", "</br>", "<b>SVI: </b>", round(recalc_RPL_THEMES, 4)
+            "<b>", GEOID, "</b>", "</br>", "<b>SVI: </b>", round(recalc_svi_2018, 4)
           ) %>% lapply(htmltools::HTML),
 
           labelOptions = leaflet::labelOptions(
@@ -804,7 +790,10 @@ equityMapServer <- function(id) {
 
 
       household_english_data_filtered <-
-        household_english_data %>%
+        ct_level_data() %>%
+        dplyr::select(
+          .data$GEOID, .data$prcnt_limited_english_speaking_households
+        ) %>%
         dplyr::filter(
           .data$prcnt_limited_english_speaking_households >= 100*range[1],
           .data$prcnt_limited_english_speaking_households <= 100*range[2],
@@ -859,13 +848,21 @@ equityMapServer <- function(id) {
       if (!rlang::is_empty(type) && all(type != "")) {
 
         vax_provider_travel_time_by_car_filtered <-
-          vax_provider_travel_time_by_car %>%
+          ct_level_data() %>%
+          dplyr::select(
+            .data$GEOID,
+            .data$travel_time_to_nearest_ped_vacc_provider_by_car
+          ) %>%
           dplyr::filter(
             .data$travel_time_to_nearest_ped_vacc_provider_by_car %in% type
           )
       } else {
         vax_provider_travel_time_by_car_filtered <-
-          vax_provider_travel_time_by_car
+          ct_level_data() %>%
+          dplyr::select(
+            .data$GEOID,
+            .data$travel_time_to_nearest_ped_vacc_provider_by_car
+          )
       }
 
       leaflet::leafletProxy("equity_map") %>%
@@ -919,13 +916,21 @@ equityMapServer <- function(id) {
       if (!rlang::is_empty(type) && all(type != "")) {
 
         vax_provider_travel_time_by_transit_filtered <-
-          vax_provider_travel_time_by_transit %>%
+          ct_level_data() %>%
+          dplyr::select(
+            .data$GEOID,
+            .data$travel_time_to_nearest_ped_vacc_provider_by_transit
+          ) %>%
           dplyr::filter(
             .data$travel_time_to_nearest_ped_vacc_provider_by_transit %in% type
           )
       } else {
         vax_provider_travel_time_by_transit_filtered <-
-          vax_provider_travel_time_by_transit
+          ct_level_data() %>%
+          dplyr::select(
+            .data$GEOID,
+            .data$travel_time_to_nearest_ped_vacc_provider_by_transit
+          )
       }
 
       leaflet::leafletProxy("equity_map") %>%
@@ -1185,6 +1190,7 @@ equityMapServer <- function(id) {
     # ==================== #
     output$equity_map <- leaflet::renderLeaflet({
       leaflet::leaflet(
+        data = ct_level_data(),
         options = leaflet::leafletOptions(
           zoomControl = FALSE
         )
@@ -1349,10 +1355,10 @@ equityMapServer <- function(id) {
         # ---- SVI ----
       # =============== #
       leaflet::addPolygons(
-        data = svi_data,
+        #data = svi_data,
         group = "Social Vulnerability Index (2018)",
         stroke = TRUE,
-        color = ~pal_svi(recalc_RPL_THEMES),
+        color = ~pal_svi(recalc_svi_2018),
         weight = 1,
         opacity = 0.5,
         dashArray = "3",
@@ -1360,7 +1366,7 @@ equityMapServer <- function(id) {
         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
         label = ~ paste0(
-          "<b>", GEOID, "</b>", "</br>", "<b>SVI: </b>", round(recalc_RPL_THEMES, 4)
+          "<b>", GEOID, "</b>", "</br>", "<b>SVI: </b>", round(recalc_svi_2018, 4)
         ) %>% lapply(htmltools::HTML),
 
         labelOptions = leaflet::labelOptions(
@@ -1388,7 +1394,7 @@ equityMapServer <- function(id) {
         # ---- Household English ----
       # ============================ #
       leaflet::addPolygons(
-        data = household_english_data,
+        #data = household_english_data,
         group = "Pct Households Speaking Limited English",
         stroke = TRUE,
         color = ~pal_household_english(prcnt_limited_english_speaking_households),
@@ -1430,7 +1436,7 @@ equityMapServer <- function(id) {
       # ======================= #
 
       leaflet::addPolygons(
-        data = vax_provider_travel_time_by_car,
+        #data = vax_provider_travel_time_by_car,
         group = "Min. (Car) to Nearest Pediatric Vax Provider",
         stroke = TRUE,
         color = ~pal_vax_provider_travel_time_by_car(travel_time_to_nearest_ped_vacc_provider_by_car),
@@ -1468,7 +1474,7 @@ equityMapServer <- function(id) {
       ) %>%
 
         leaflet::addPolygons(
-          data = vax_provider_travel_time_by_transit,
+          #data = vax_provider_travel_time_by_transit,
           group = "Min. (Tranist) to Nearest Pediatric Vax Provider",
           stroke = TRUE,
           color = ~pal_vax_provider_travel_time_by_transit(travel_time_to_nearest_ped_vacc_provider_by_transit),

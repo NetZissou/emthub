@@ -359,7 +359,8 @@ get_covid_data_county<- function() {
       emthub::ROOT,
       "Vaccine",
       "Ohio_COVID_case_and_vacc_rates.geojson"
-    )
+    ),
+    quiet=TRUE
   )
 }
 
@@ -385,6 +386,100 @@ get_birth_outcomes <- function() {
 }
 
 
+# ====================
+# > Census Tratc Level
+
+# - Disease Outcomes
+# - Recalc SVI
+# - Percent Limited English Speaking Household
+# x Percent Hispanic Or Latino
+# - Low Income & Food Access
+# - Poverty Rate
+# - Infant Health Score
+# - Min Travel Time to Vax Provider
+
+get_ct_level_data <- function() {
+
+  # ct_level_data <-
+  #   readr::read_csv(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Demographic",
+  #       "emt_oh_ctracts_dataset.csv"
+  #     )
+  #   ) %>%
+  #   dplyr::mutate(
+  #     censustract = as.character(.data$censustract)
+  #   ) %>%
+  #   dplyr::rename(
+  #     scaled_rank_sum = .data$`composite chronic disease burden score`
+  #   )
+  #
+  #
+  # birth_outcomes <-
+  #   get_birth_outcomes() %>%
+  #   dplyr::select(
+  #     censustract = census_tract,
+  #     infant_health_score_quantile,
+  #     infant_health_score
+  #   )
+  #
+  #
+  # vax_provider_travel_time_by_car <-
+  #   get_vax_provider_travel_time_by_car() %>%
+  #   dplyr::as_tibble() %>%
+  #   dplyr::select(
+  #     .data$GEOID, .data$travel_time_to_nearest_ped_vacc_provider_by_car
+  #   )
+  #
+  # vax_provider_travel_time_by_transit <-
+  #   get_vax_provider_travel_time_by_transit() %>%
+  #   dplyr::as_tibble() %>%
+  #   dplyr::select(
+  #     .data$GEOID, .data$travel_time_to_nearest_ped_vacc_provider_by_transit
+  #   )
+  #
+  #
+  # get_sf_ct() %>%
+  #   dplyr::select(.data$GEOID) %>%
+  #   dplyr::left_join(
+  #     ct_level_data,
+  #     by = c("GEOID" = "censustract")
+  #   ) %>%
+  #   dplyr::left_join(
+  #     birth_outcomes,
+  #     by = c("GEOID" = "censustract")
+  #   ) %>%
+  #   dplyr::left_join(
+  #     vax_provider_travel_time_by_car,
+  #     by = "GEOID"
+  #   ) %>%
+  #   dplyr::left_join(
+  #     vax_provider_travel_time_by_transit,
+  #     by = "GEOID"
+  #   ) %>%
+  #   sf::st_write(
+  #     fs::path(
+  #       emthub::ROOT,
+  #       "Demographic",
+  #       "emt_oh_ctracts_dataset.geojson"
+  #     )
+  #   )
+
+  sf::st_read(
+    fs::path(
+      emthub::ROOT,
+      "Demographic",
+      "emt_oh_ctracts_dataset.geojson"
+    ),
+    quiet=TRUE
+  )
+}
+
+
+
+
+
 
 
 
@@ -398,7 +493,8 @@ get_sf_county <- function() {
       emthub::ROOT,
       "Shapefile",
       "sf_county_hub.geojson"
-    )
+    ),
+    quiet=TRUE
   )
 }
 
@@ -414,7 +510,8 @@ get_sf_hub <- function() {
       "Shapefile",
       #"HUB_Counties_07.28.2023.geojson"
       "sf_hub.geojson"
-    )
+    ),
+    quiet=TRUE
   )
 }
 
@@ -458,7 +555,8 @@ get_sf_ct <- function() {
       emthub::ROOT,
       "Shapefile",
       "sf_census_tract.geojson"
-    )
+    ),
+    quiet=TRUE
   )
 }
 
@@ -472,7 +570,8 @@ get_sf_zip <- function() {
       emthub::ROOT,
       "Shapefile",
       "tl_2018_us_zcta510_for_Mahoning_County.geojson"
-    )
+    ),
+    quiet=TRUE
   )
 }
 

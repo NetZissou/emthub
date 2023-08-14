@@ -19,7 +19,7 @@ ui <- function() {
 
     sidebar = NULL,
 
-    selected = "Disease Outcomes Map",
+    selected = "Equity Map",
 
     shiny::tags$head(
       # Note the wrapping of the string in HTML()
@@ -27,6 +27,13 @@ ui <- function() {
     meter::-webkit-meter-optimum-value {
     background: red; /* Green */
     }"))
+    ),
+
+    bslib::nav_panel(
+      "Equity Map",
+      waiter::autoWaiter(),
+      equityMapUI("equity_map")
+
     ),
 
     bslib::nav_panel(
@@ -38,13 +45,6 @@ ui <- function() {
         )
       ),
       diseaseOutcomesUI("disease_outcomes")
-    ),
-
-    bslib::nav_panel(
-      "Equity Map",
-      waiter::autoWaiter(),
-      equityMapUI("equity_map")
-
     ),
 
     bslib::nav_panel("Data",
