@@ -463,7 +463,7 @@ equityMapServer <- function(id, ct_level_data) {
     covid_data <- get_covid_data_county()
 
     # > Census Tract Level
-    # NOTE: USE ct_level_data()
+    # NOTE: USE ct_level_data
 
     # svi_data <- get_SVI()
     # household_english_data <- get_pct_household_limited_english()
@@ -737,7 +737,7 @@ equityMapServer <- function(id, ct_level_data) {
 
 
       svi_data_filtered <-
-        ct_level_data() %>%
+        ct_level_data %>%
         dplyr::select(.data$GEOID, .data$recalc_svi_2018) %>%
         dplyr::filter(
           .data$recalc_svi_2018 >= range[1],
@@ -790,7 +790,7 @@ equityMapServer <- function(id, ct_level_data) {
 
 
       household_english_data_filtered <-
-        ct_level_data() %>%
+        ct_level_data %>%
         dplyr::select(
           .data$GEOID, .data$prcnt_limited_english_speaking_households
         ) %>%
@@ -848,7 +848,7 @@ equityMapServer <- function(id, ct_level_data) {
       if (!rlang::is_empty(type) && all(type != "")) {
 
         vax_provider_travel_time_by_car_filtered <-
-          ct_level_data() %>%
+          ct_level_data %>%
           dplyr::select(
             .data$GEOID,
             .data$travel_time_to_nearest_ped_vacc_provider_by_car
@@ -858,7 +858,7 @@ equityMapServer <- function(id, ct_level_data) {
           )
       } else {
         vax_provider_travel_time_by_car_filtered <-
-          ct_level_data() %>%
+          ct_level_data %>%
           dplyr::select(
             .data$GEOID,
             .data$travel_time_to_nearest_ped_vacc_provider_by_car
@@ -916,7 +916,7 @@ equityMapServer <- function(id, ct_level_data) {
       if (!rlang::is_empty(type) && all(type != "")) {
 
         vax_provider_travel_time_by_transit_filtered <-
-          ct_level_data() %>%
+          ct_level_data %>%
           dplyr::select(
             .data$GEOID,
             .data$travel_time_to_nearest_ped_vacc_provider_by_transit
@@ -926,7 +926,7 @@ equityMapServer <- function(id, ct_level_data) {
           )
       } else {
         vax_provider_travel_time_by_transit_filtered <-
-          ct_level_data() %>%
+          ct_level_data %>%
           dplyr::select(
             .data$GEOID,
             .data$travel_time_to_nearest_ped_vacc_provider_by_transit
@@ -1190,7 +1190,7 @@ equityMapServer <- function(id, ct_level_data) {
     # ==================== #
     output$equity_map <- leaflet::renderLeaflet({
       leaflet::leaflet(
-        data = ct_level_data(),
+        data = ct_level_data,
         options = leaflet::leafletOptions(
           zoomControl = FALSE
         )

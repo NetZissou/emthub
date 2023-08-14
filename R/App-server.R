@@ -8,7 +8,7 @@
 server <- function(input, output, session) {
 
   app_county <- shiny::reactiveValues(
-    value = NULL
+    value = "Mahoning"
   )
   shiny::observe(priority = 999, {
     query <- shiny::parseQueryString(session$clientData$url_search)
@@ -25,30 +25,15 @@ server <- function(input, output, session) {
     }
   })
 
-  #ct_level_data <- get_ct_level_data()
-
-
-
-  ct_level_data <- shiny::reactive({
-
-    if (rlang::is_empty(app_county$value)) {
-      return(get_ct_level_data())
-    } else {
-      return(
-        get_ct_level_data() %>%
-          dplyr::filter(
-            stringr::str_to_lower(.data$CountyName) %in% stringr::str_to_lower(app_county$value)
-          )
-      )
-    }
-  })
+  ct_level_data_all <- get_ct_level_data()
 
 
   diseaseOutcomesServer(
-    "disease_outcomes"
-    #ct_level_data
+    "disease_outcomes",
+    ct_level_data_all,
+    app_county
   )
 
-  equityMapServer("equity_map", ct_level_data = ct_level_data)
+  equityMapServer("equity_map", ct_level_data_all)
 
 }
