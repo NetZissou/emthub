@@ -20,9 +20,11 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports: 
+    arrow,
     bslib,
     crosstalk,
     devtools,
+    docopt,
     dplyr,
     fontawesome,
     fs,
@@ -41,6 +43,7 @@ Imports:
     readr,
     rlang,
     sf,
+    sfarrow,
     shiny,
     sortable,
     stringr,
