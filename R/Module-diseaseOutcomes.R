@@ -18,7 +18,20 @@ diseaseOutcomesUI <- function(id) {
           bslib::navset_pill(
             bslib::nav_panel(
               'Info',
-              shiny::htmlOutput(shiny::NS(id, "index_map_info"))
+              bslib::card(
+                bslib::card_body(
+                  min_height = 500,
+                  shiny::selectInput(
+                    shiny::NS(id, "global_county"),
+                    label = "Select County",
+                    choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
+                    multiple = TRUE,
+                    selected = NULL,
+                    width = "100%"
+                  ),
+                  shiny::htmlOutput(shiny::NS(id, "index_map_info"))
+                )
+              )
             ),
             bslib::nav_panel(
               'Places',
@@ -152,55 +165,88 @@ diseaseOutcomesUI <- function(id) {
   )
 }
 
-
-diseaseOutcomesServer <- function(id) {
+diseaseOutcomesServer <- function(id, ct_level_data_all, app_county) {
 
   shiny::moduleServer(id, function(input, output, session){
 
     # ============== #
     # ---- Data ----
     # ============== #
-    # Point Level
-    ACCESSIBILITY_DATA <- get_acc_data()
+
+    # > Params
+    tier_weight_list <- shiny::reactiveValues(
+      tier_1 = 0,
+      tier_2 = 0,
+      tier_3 = 0
+    )
+
+    tier_score_tbl <- shiny::reactiveValues(
+      value = tibble::tibble(
+        GEOID = character(),
+        tier_1 = numeric(),
+        tier_2 = numeric(),
+        tier_3 = numeric(),
+        weighted_score = numeric(),
+        weighted_score_scaled = numeric()
+      ),
+      pal = NULL
+    )
+
+    shiny::observe({
+
+      shiny::updateSelectInput(
+        inputId = "global_county",
+        selected = glue::glue(
+          "{name} County",
+          name = app_county$value
+        )
+      )
+      #print("=======================")
+      #print(input$global_county)
+    }, priority = 999)
+
+    # > Point Level
     BUSINESS_LOCATION_DATA <- get_business_location()
-
-    # Regional Rates
-    DISEASE_DATA <- get_disease_data()
-
-    # Shapefiles
-    SF_ZIP <- get_sf_zip()
-    SF_CENSUS_TRACT <-
-      get_sf_ct() %>%
-      dplyr::filter(
-        as.character(.data$GEOID) %in% as.character(DISEASE_DATA$censustract)
-      )
-
-    SF_DISEASE_DATA <-
-      SF_CENSUS_TRACT %>%
-      dplyr::left_join(DISEASE_DATA, by = c("GEOID" = "censustract"))
-
-    SF_BIRTH_OUTCOMES_DATA <-
-      SF_CENSUS_TRACT %>%
-      dplyr::left_join(
-        get_birth_outcomes() %>%
-          dplyr::filter(.data$county == "Mahoning"),
-        by = c("GEOID" = "census_tract")
-      )
-
-
-
 
     business_data <-
       shiny::reactiveValues(
         filtered = BUSINESS_LOCATION_DATA
       )
 
+    # > Regional Rates
+    ACCESSIBILITY_DATA <- get_acc_data()
     acc_data <-
       shiny::reactiveValues(
         value = NULL,
         pal = NULL
       )
 
+    ct_level_data <- shiny::reactive({
+      shiny::req(!rlang::is_empty(input$global_county))
+      ct_level_data_all %>%
+        dplyr::filter(
+          stringr::str_to_lower(.data$CountyName) %in% stringr::str_to_lower(stringr::str_remove(input$global_county, " County"))
+        )
+    })
+
+    # > Shapefiles
+    SF_ZIP <- get_sf_zip()
+    SF_CT <- get_sf_ct()
+    SF_COUNTY <- get_sf_county()
+
+    # > Pal
+    pal_scaled_sum_rank <- emthub::PAL$pal_scaled_sum_rank
+
+    pal_poverty_rate <- emthub::PAL$pal_poverty_rate
+
+    pal_birth_outcomes <- emthub::PAL$pal_birth_outcomes
+
+
+    # ======================= #
+    # ---- Event Handler ----
+    # ======================= #
+
+    # > Accessibility ----
     updateAcc <-
       function() {
 
@@ -226,12 +272,6 @@ diseaseOutcomesServer <- function(id) {
         }
 
         acc_data$value <- acc_data_filtered
-        # acc_data$pal <-
-        #   leaflet::colorNumeric(
-        #     palette = "Reds",
-        #     domain = acc_data_filtered$value,
-        #     na.color = "#808080"
-        #   )
         acc_data$pal <-
           leaflet::colorFactor(
             palette = emthub::ACC_PARAM_LIST$color[[input$filter_transportation_method]],
@@ -244,18 +284,11 @@ diseaseOutcomesServer <- function(id) {
             #ordered = TRUE
           )
 
-        # test_type <- "car"
-        # pal <-
-        #   leaflet::colorFactor(
-        #     palette = emthub::ACC_PARAM_LIST$color[[test_type]],
-        #     domain = emthub::ACC_PARAM_LIST$level[[test_type]],
-        #     levels = emthub::ACC_PARAM_LIST$level[[test_type]],
-        #     ordered = TRUE
-        #   )
-
 
 
         leaflet::leafletProxy("index_map") %>%
+          leaflet.extras2::addSpinner() %>%
+          leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
           leaflet::clearGroup(group = "Accessibility") %>%
           leaflet::removeControl(layerId = "acc_legend") %>%
           leaflet::addPolygons(
@@ -308,9 +341,17 @@ diseaseOutcomesServer <- function(id) {
             opacity = 1,
             labels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]]
             #labFormat = leaflet::labelFormat(suffix = " Mins")
-          )
+          ) %>%
+          leaflet.extras2::stopSpinner()
       }
 
+    shiny::observeEvent(input$apply_filter_acc, {
+
+      updateAcc()
+
+    })
+
+    # > Places ----
     updateBusiness <-
       function () {
 
@@ -361,25 +402,23 @@ diseaseOutcomesServer <- function(id) {
 
     })
 
-    shiny::observeEvent(input$apply_filter_acc, {
 
-      updateAcc()
+    # > Weight Score ----
 
-    })
-
-    # Weight Score
     get_tier_score <-
       function(data, tier_list, tier_name, weight) {
         if (!rlang::is_empty(tier_list)) {
 
           data %>%
+            dplyr::as_tibble() %>%
             dplyr::select(
-              .data$censustract,
+              .data$GEOID,
               dplyr::all_of(
-                stringr::str_c(
-                  "rank_",
-                  tier_list
-                )
+                emthub::DISEASE_DATA_VARS
+                # stringr::str_c(
+                #   "rank_",
+                #   tier_list
+                # )
               )
             ) %>%
             tidyr::pivot_longer(
@@ -387,45 +426,26 @@ diseaseOutcomesServer <- function(id) {
               names_to = "outcome",
               values_to = "value"
             ) %>%
-            dplyr::group_by(.data$censustract) %>%
+            dplyr::group_by(.data$GEOID) %>%
             dplyr::summarise(value = sum(.data$value) * weight) %>%
             purrr::set_names(
-              c("censustract", tier_name)
+              c("GEOID", tier_name)
             )
 
         } else {
 
           data %>%
+            dplyr::as_tibble() %>%
             dplyr::transmute(
-              censustract = .data$censustract,
+              GEOID = .data$GEOID,
               value = 0
             ) %>%
             purrr::set_names(
-              c("censustract", tier_name)
+              c("GEOID", tier_name)
             )
 
         }
       }
-
-
-
-    tier_weight_list <- shiny::reactiveValues(
-      tier_1 = 0,
-      tier_2 = 0,
-      tier_3 = 0
-    )
-
-    tier_score_tbl <- shiny::reactiveValues(
-      value = tibble::tibble(
-        censustract = character(),
-        tier_1 = numeric(),
-        tier_2 = numeric(),
-        tier_3 = numeric(),
-        weighted_score = numeric(),
-        weighted_score_scaled = numeric()
-      ),
-      pal = NULL
-    )
 
     updateWeights <- function() {
       # Get the input values
@@ -489,33 +509,35 @@ diseaseOutcomesServer <- function(id) {
 
     }
 
-
     updateTierScore <- function() {
 
       tier_score_tbl$value <-
         get_tier_score(
-          DISEASE_DATA,
+          #DISEASE_DATA,
+          ct_level_data(),
           input$rank_list_1,
           "tier_1",
           weight = tier_weight_list$tier_1
         ) %>% dplyr::left_join(
 
           get_tier_score(
-            DISEASE_DATA,
+            #DISEASE_DATA,
+            ct_level_data(),
             input$rank_list_2,
             "tier_2",
             weight = tier_weight_list$tier_2
           ),
-          by = "censustract"
+          by = "GEOID"
         ) %>% dplyr::left_join(
 
           get_tier_score(
-            DISEASE_DATA,
+            #DISEASE_DATA,
+            ct_level_data(),
             input$rank_list_3,
             "tier_3",
             weight = tier_weight_list$tier_3
           ),
-          by = "censustract"
+          by = "GEOID"
         ) %>%
         dplyr::mutate(
           weighted_score = .data$tier_1 + .data$tier_2 + .data$tier_3,
@@ -523,16 +545,15 @@ diseaseOutcomesServer <- function(id) {
           weighted_score_scaled = ifelse(is.nan(.data$weighted_score_scaled), NA, .data$weighted_score_scaled)
         )
 
-      # tier_score_tbl$pal <-
-      #   leaflet::colorNumeric(
-      #     palette = "Reds",
-      #     domain = tier_score_tbl$value$weighted_score_scaled
-      #   )
 
       leaflet::leafletProxy("index_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
         leaflet::clearGroup(group = "Disease Outcomes Weighted Rank Score") %>%
         leaflet::addPolygons(
-          data = SF_CENSUS_TRACT %>% dplyr::left_join(tier_score_tbl$value, by = c("GEOID" = "censustract")),
+          data = ct_level_data() %>% dplyr::select(.data$GEOID) %>%
+            dplyr::inner_join(tier_score_tbl$value, by = "GEOID"),
+          #data = tier_score_tbl$value,
           group = "Disease Outcomes Weighted Rank Score",
           stroke = TRUE,
           color = ~pal_scaled_sum_rank(weighted_score_scaled),
@@ -568,11 +589,11 @@ diseaseOutcomesServer <- function(id) {
           # TODO: Process Layer ID
           layerId = ~paste0("weighted_", GEOID),
           options = leaflet::pathOptions(pane = "layer_bottom")
-        )
+        ) %>%
+        leaflet.extras2::stopSpinner()
 
 
     }
-
 
 
     shiny::observeEvent(input$rank_list_1, {
@@ -597,210 +618,222 @@ diseaseOutcomesServer <- function(id) {
     })
 
 
-    pal_scaled_sum_rank <- leaflet::colorNumeric(
-      palette = "Reds",
-      domain = DISEASE_DATA$scaled_rank_sum,
-      na.color = "#808080"
-    )
-
-    pal_poverty_rate <- leaflet::colorNumeric(
-      palette = "RdPu",
-      domain = DISEASE_DATA$PovertyRate
-    )
-
-    pal_birth_outcomes <- leaflet::colorFactor(
-      palette = emthub::BIRTH_OUTCOMES_PAL,
-      domain = unique(SF_BIRTH_OUTCOMES_DATA$infant_health_score_quantile),
-      reverse = FALSE
-    )
+    # ============= #
+    # ---- Map ----
+    # ============= #
 
     output$index_map <- leaflet::renderLeaflet({
+      shiny::req(!rlang::is_empty(input$global_county))
+
+      centroid <-
+        SF_COUNTY %>%
+        dplyr::filter(.data$COUNTY == input$global_county) %>%
+        dplyr::pull(.data$geometry) %>%
+        sf::st_centroid() %>%
+        unlist()
 
       leaflet::leaflet(
+        data = ct_level_data(),
         options = leaflet::leafletOptions(
           zoomControl = FALSE
         )
       ) %>%
-        # =================== #
-        # ---- Map Tiles ----
-      # =================== #
-      leaflet::addTiles() %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+        leaflet::setView(
+          lat = centroid[2],
+          lng = centroid[1],
+          zoom = 10
+        ) %>%
+        leaflet::addTiles() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
 
         leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%
 
-        leaflet::addPolygons(
-          data = SF_DISEASE_DATA,
-          group = "Disease Outcomes Rank Score",
-          stroke = TRUE,
-          color = ~pal_scaled_sum_rank(scaled_rank_sum),
-          weight = 1,
-          #opacity = 0.8,
-          dashArray = "3",
-          fillOpacity = 0.8,
-          #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+        # ============================ #
+        # > Disease Outcomes Rank ----
 
-          label = ~ paste0(
-            "<b>", GEOID, "</b>", "</br>", round(scaled_rank_sum, 4)
-          ) %>% lapply(htmltools::HTML),
+      leaflet::addPolygons(
+        group = "Disease Outcomes Rank Score",
+        stroke = TRUE,
+        color = ~pal_scaled_sum_rank(scaled_rank_sum),
+        weight = 1,
+        #opacity = 0.8,
+        dashArray = "3",
+        fillOpacity = 0.8,
+        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
-          labelOptions = leaflet::labelOptions(
-            style = list(
-              "font-weight" = "normal",
-              padding = "3px 8px"
-            ),
-            textsize = "15px",
-            direction = "auto"
+        label = ~ paste0(
+          "<b>", GEOID, "</b>", "</br>", round(scaled_rank_sum, 4)
+        ) %>% lapply(htmltools::HTML),
+
+        labelOptions = leaflet::labelOptions(
+          style = list(
+            "font-weight" = "normal",
+            padding = "3px 8px"
           ),
+          textsize = "15px",
+          direction = "auto"
+        ),
 
-          highlight = leaflet::highlightOptions(
-            weight = 3,
-            fillOpacity = 0.1,
-            color = "black",
-            dashArray = "",
-            opacity = 0.5,
-            bringToFront = TRUE,
-            sendToBack = TRUE
-          ),
-          layerId = ~GEOID,
-          options = leaflet::pathOptions(pane = "layer_bottom")
-        ) %>%
-
-        leaflet::addPolygons(
-          data = SF_DISEASE_DATA,
-          group = "Poverty Rate",
-          stroke = TRUE,
-          color = ~pal_poverty_rate(PovertyRate),
-          weight = 1,
-          #opacity = 0.8,
-          dashArray = "3",
-          fillOpacity = 0.8,
-          #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-
-          label = ~ paste0(
-            "<b>", GEOID, "</b>", "</br>", round(PovertyRate, 4)
-          ) %>% lapply(htmltools::HTML),
-
-          labelOptions = leaflet::labelOptions(
-            style = list(
-              "font-weight" = "normal",
-              padding = "3px 8px"
-            ),
-            textsize = "15px",
-            direction = "auto"
-          ),
-
-          highlight = leaflet::highlightOptions(
-            weight = 3,
-            fillOpacity = 0.1,
-            color = "black",
-            dashArray = "",
-            opacity = 0.5,
-            bringToFront = TRUE,
-            sendToBack = TRUE
-          ),
-
-          # TODO: Process Layer ID
-          layerId = ~paste0("pov_", GEOID),
-          options = leaflet::pathOptions(pane = "layer_bottom")
-        ) %>%
-        leaflet::addPolygons(
-          data = SF_BIRTH_OUTCOMES_DATA,
-          group = "Infant Health Score",
-          stroke = TRUE,
-          color = ~pal_birth_outcomes(infant_health_score_quantile),
-          weight = 1,
-          #opacity = 0.8,
-          dashArray = "3",
-          fillOpacity = 0.8,
-          #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-
-          label = ~ paste0(
-            "<b>", GEOID, "</b>", "</br>",
-            "Infant Health Score: ", infant_health_score_quantile, "</br>",
-            "Quantile: ", round(infant_health_score, 4)
-          ) %>% lapply(htmltools::HTML),
-
-          labelOptions = leaflet::labelOptions(
-            style = list(
-              "font-weight" = "normal",
-              padding = "3px 8px"
-            ),
-            textsize = "15px",
-            direction = "auto"
-          ),
-
-          highlight = leaflet::highlightOptions(
-            weight = 3,
-            fillOpacity = 0.1,
-            color = "black",
-            dashArray = "",
-            opacity = 0.5,
-            bringToFront = TRUE,
-            sendToBack = TRUE
-          ),
-
-          # TODO: Process Layer ID
-          layerId = ~paste0("infant_health_score", GEOID),
-          options = leaflet::pathOptions(pane = "layer_bottom")
-        ) %>%
-        leaflet::addPolygons(
-          data = SF_ZIP,
-          group = "Zip Code",
-          stroke = TRUE,
-          color = "#555555",
-          weight = 1,
-          opacity = 0.8,
-          dashArray = "3",
+        highlight = leaflet::highlightOptions(
+          weight = 3,
           fillOpacity = 0.1,
-          #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+          color = "black",
+          dashArray = "",
+          opacity = 0.5,
+          bringToFront = TRUE,
+          sendToBack = TRUE
+        ),
+        layerId = ~GEOID,
+        options = leaflet::pathOptions(pane = "layer_bottom")
+      ) %>%
 
-          label = ~ paste0(
-            "<b>", GEOID10, "</b>"
-          ) %>% lapply(htmltools::HTML),
+        # ==================== #
+        #  > Poverty Rate ----
+      leaflet::addPolygons(
+        group = "Poverty Rate",
+        stroke = TRUE,
+        color = ~pal_poverty_rate(PovertyRate),
+        weight = 1,
+        #opacity = 0.8,
+        dashArray = "3",
+        fillOpacity = 0.8,
+        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
-          labelOptions = leaflet::labelOptions(
-            style = list(
-              "font-weight" = "normal",
-              padding = "3px 8px"
-            ),
-            textsize = "15px",
-            direction = "auto"
+        label = ~ paste0(
+          "<b>", GEOID, "</b>", "</br>", round(PovertyRate, 4)
+        ) %>% lapply(htmltools::HTML),
+
+        labelOptions = leaflet::labelOptions(
+          style = list(
+            "font-weight" = "normal",
+            padding = "3px 8px"
+          ),
+          textsize = "15px",
+          direction = "auto"
+        ),
+
+        highlight = leaflet::highlightOptions(
+          weight = 3,
+          fillOpacity = 0.1,
+          color = "black",
+          dashArray = "",
+          opacity = 0.5,
+          bringToFront = TRUE,
+          sendToBack = TRUE
+        ),
+
+        # TODO: Process Layer ID
+        layerId = ~paste0("pov_", GEOID),
+        options = leaflet::pathOptions(pane = "layer_bottom")
+      ) %>%
+
+        # ========================== #
+        # > Infant Health Score ----
+      leaflet::addPolygons(
+        group = "Infant Health Score",
+        stroke = TRUE,
+        color = ~pal_birth_outcomes(infant_health_score_quantile),
+        weight = 1,
+        #opacity = 0.8,
+        dashArray = "3",
+        fillOpacity = 0.8,
+        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+
+        label = ~ paste0(
+          "<b>", GEOID, "</b>", "</br>",
+          "Infant Health Score: ", infant_health_score_quantile, "</br>",
+          "Quantile: ", round(infant_health_score, 4)
+        ) %>% lapply(htmltools::HTML),
+
+        labelOptions = leaflet::labelOptions(
+          style = list(
+            "font-weight" = "normal",
+            padding = "3px 8px"
+          ),
+          textsize = "15px",
+          direction = "auto"
+        ),
+
+        highlight = leaflet::highlightOptions(
+          weight = 3,
+          fillOpacity = 0.1,
+          color = "black",
+          dashArray = "",
+          opacity = 0.5,
+          bringToFront = TRUE,
+          sendToBack = TRUE
+        ),
+
+        # TODO: Process Layer ID
+        layerId = ~paste0("infant_health_score", GEOID),
+        options = leaflet::pathOptions(pane = "layer_bottom")
+      ) %>%
+
+        # =================== #
+        # > Overlay: Zip ----
+
+      leaflet::addPolygons(
+        data = SF_ZIP,
+        group = "Zip Code",
+        stroke = TRUE,
+        color = "#555555",
+        weight = 1,
+        opacity = 0.8,
+        dashArray = "3",
+        fillOpacity = 0.1,
+        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+
+        label = ~ paste0(
+          "<b>", GEOID10, "</b>"
+        ) %>% lapply(htmltools::HTML),
+
+        labelOptions = leaflet::labelOptions(
+          style = list(
+            "font-weight" = "normal",
+            padding = "3px 8px"
+          ),
+          textsize = "15px",
+          direction = "auto"
+        ),
+
+        highlight = leaflet::highlightOptions(
+          weight = 3,
+          fillOpacity = 0.1,
+          color = "black",
+          dashArray = "",
+          opacity = 0.5,
+          bringToFront = TRUE,
+          sendToBack = TRUE
+        ),
+        options = leaflet::pathOptions(pane = "layer_top")
+      ) %>%
+
+        # ========================================== #
+        # > Overlay: Low Income Low Food Access ----
+      leaflet::addPolylines(
+        data = ct_level_data() %>%
+          dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1) %>%
+          dplyr::select(.data$geometry) %>%
+          sf::as_Spatial() %>%
+          HatchedPolygons::hatched.SpatialPolygons(
+            density = 150,
+            angle = 45
           ),
 
-          highlight = leaflet::highlightOptions(
-            weight = 3,
-            fillOpacity = 0.1,
-            color = "black",
-            dashArray = "",
-            opacity = 0.5,
-            bringToFront = TRUE,
-            sendToBack = TRUE
-          ),
-          options = leaflet::pathOptions(pane = "layer_top")
-        ) %>%
-        leaflet::addPolylines(
-          data = SF_DISEASE_DATA %>%
-            dplyr::filter(.data$low_income_low_food_access_1_and_10_miles == 1) %>%
-            dplyr::select(.data$geometry) %>%
-            sf::as_Spatial() %>%
-            HatchedPolygons::hatched.SpatialPolygons(
-              density = 150,
-              angle = 45
-            ),
-
-          group = "Low income & Low food access (1-10 miles)",
-          stroke = TRUE,
-          color = "black", #"#e6550d",
-          weight = 2.5,
-          dashArray = "1",
-          fillOpacity = 0,
-          options = leaflet::pathOptions(pane = "layer_top")
-        ) %>%
+        group = "Low income & Low food access (1-10 miles)",
+        stroke = TRUE,
+        color = "black", #"#e6550d",
+        weight = 2.5,
+        dashArray = "1",
+        fillOpacity = 0,
+        options = leaflet::pathOptions(pane = "layer_top")
+      ) %>%
 
         leaflet::addPolylines(
-          data = SF_DISEASE_DATA %>%
+          data = ct_level_data() %>%
             dplyr::filter(.data$low_income_low_food_access_half_and_10_miles == 1) %>%
             dplyr::select(.data$geometry) %>%
             sf::as_Spatial() %>%
@@ -819,7 +852,7 @@ diseaseOutcomesServer <- function(id) {
         ) %>%
 
         leaflet::addPolylines(
-          data = SF_DISEASE_DATA %>%
+          data = ct_level_data() %>%
             dplyr::filter(.data$low_income_low_food_access_1_and_20_miles == 1) %>%
             dplyr::select(.data$geometry) %>%
             sf::as_Spatial() %>%
@@ -836,19 +869,22 @@ diseaseOutcomesServer <- function(id) {
           fillOpacity = 0,
           options = leaflet::pathOptions(pane = "layer_top")
         ) %>%
-        leaflet::addLegend(
-          "bottomright",
-          group = "Infant Health Score",
-          data = SF_BIRTH_OUTCOMES_DATA,
-          pal = pal_birth_outcomes, values = ~infant_health_score_quantile,
-          title = "Infant</br>Health Score</br>Quantile",
-          opacity = 1
-        ) %>%
+
+        # ============= #
+        # > Legend ----
+      leaflet::addLegend(
+        "bottomright",
+        group = "Infant Health Score",
+        #data = ct_level_data,
+        pal = pal_birth_outcomes, values = ~infant_health_score_quantile,
+        title = "Infant</br>Health Score</br>Quantile",
+        opacity = 1
+      ) %>%
 
         leaflet::addLegend(
           "bottomright",
           group = "Poverty Rate",
-          data = DISEASE_DATA,
+          #data = DISEASE_DATA,
           pal = pal_poverty_rate, values = ~PovertyRate,
           title = "Poverty Rate",
           opacity = 1
@@ -857,7 +893,7 @@ diseaseOutcomesServer <- function(id) {
         leaflet::addLegend(
           "bottomright",
           group = "Disease Outcomes Rank Score",
-          data = DISEASE_DATA,
+          #data = DISEASE_DATA,
           pal = pal_scaled_sum_rank, values = ~scaled_rank_sum,
           title = "Rank Score",
           opacity = 1
@@ -888,9 +924,14 @@ diseaseOutcomesServer <- function(id) {
             "Low income & Low food access (half-10 miles)",
             "Low income & Low food access (1-20 miles)"
           )
-        )
+        ) %>%
+        leaflet.extras2::stopSpinner()
 
     })
+
+
+    # ================== #
+    # Panel Output ----
 
     ct_selected <- shiny::reactive({
       #input$index_map_shape_click$id
@@ -905,22 +946,31 @@ diseaseOutcomesServer <- function(id) {
       if (!rlang::is_empty(ct_selected())) {
 
         selected_census_tract <- ct_selected()
+        n_total <- nrow(ct_level_data())
 
         ct_disease_rank_data <-
-          DISEASE_DATA %>%
-          dplyr::filter(.data$censustract == as.character(selected_census_tract)) %>%
+          ct_level_data() %>%
+          dplyr::as_tibble() %>%
+          dplyr::filter(.data$GEOID == as.character(selected_census_tract)) %>%
           dplyr::select(dplyr::all_of(c(
             #DISEASE_OUTCOMES,
-            stringr::str_c("rank_", emthub::DISEASE_OUTCOMES),
+            emthub::DISEASE_DATA_VARS,
             "recalc_svi_2018"
           ))) %>%
           tidyr::pivot_longer(-.data$recalc_svi_2018, names_to = "disease", values_to = "rank") %>%
+          dplyr::mutate(
+            disease = stringr::str_replace(.data$disease, "\\.\\.", " ("),
+            disease = stringr::str_replace(.data$disease, "\\.", " "),
+            disease = stringr::str_remove(.data$disease, "rank_"),
+            disease = stringr::str_to_title(.data$disease)
+          ) %>%
           dplyr::slice_max(.data$rank, n = 5) %>%
           dplyr::mutate(
             html_output = glue::glue(
-              '<h5>{disease}: {disease_rank}/70</h5><meter value="{disease_rank}" min="0" max="70"></meter>',
+              '<h5>{disease}: {disease_rank}/{n}</h5><meter value="{disease_rank}" min="0" max="{n}"></meter>',
               disease = stringr::str_remove(.data$disease, "rank_"),
-              disease_rank = .data$rank
+              disease_rank = .data$rank,
+              n = n_total
             )
           )
 
@@ -941,6 +991,10 @@ diseaseOutcomesServer <- function(id) {
         )
       }
     })
+
+
+    # =================== #
+    # Business Table ----
 
     output$business_table <- reactable::renderReactable({
 
@@ -987,6 +1041,8 @@ diseaseOutcomesServer <- function(id) {
       if (!rlang::is_empty(selected_business$value)) {
 
         leaflet::leafletProxy("index_map") %>%
+          leaflet.extras2::addSpinner() %>%
+          leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
           leaflet::clearGroup("Business Location") %>%
           leaflet::addMarkers(
             data = selected_business$value,
@@ -1001,16 +1057,23 @@ diseaseOutcomesServer <- function(id) {
               )
             ),
             options = leaflet::pathOptions(pane = "layer_top")
-          )
+          ) %>%
+          leaflet.extras2::stopSpinner()
 
       } else {
 
         leaflet::leafletProxy("index_map") %>%
-          leaflet::clearGroup("Business Location")
+          leaflet.extras2::addSpinner() %>%
+          leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+          leaflet::clearGroup("Business Location") %>%
+          leaflet.extras2::stopSpinner()
       }
 
       #print(selected_business$value)
     })
+
+
+
 
   })
 }

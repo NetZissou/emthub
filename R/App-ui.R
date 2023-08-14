@@ -19,7 +19,7 @@ ui <- function() {
 
     sidebar = NULL,
 
-    selected = "Equity Map",
+    selected = "Disease Outcomes Map",
 
     shiny::tags$head(
       # Note the wrapping of the string in HTML()
