@@ -7,8 +7,11 @@
 #' @export
 server <- function(input, output, session) {
 
+  # ====================== #
+  # ---- Hyper Params ----
+  # ====================== #
   app_county <- shiny::reactiveValues(
-    value = "Mahoning"
+    value = "Franklin"
   )
   shiny::observe(priority = 999, {
     query <- shiny::parseQueryString(session$clientData$url_search)
@@ -22,18 +25,39 @@ server <- function(input, output, session) {
         inputId = "emt",
         target = "Equity Map"
       )
+
+      shiny::updateTabsetPanel(
+        session, "emt",
+        selected = "Disease Outcomes Map"
+      )
     }
   })
 
-  ct_level_data_all <- get_ct_level_data()
+  # ============== #
+  # ---- Data ----
+  # ============== #
+  ct_level_data_all <- get_ct_level_data(parquet = TRUE)
 
+  shapefile_list <-
+    list(
+      SF_HUB = get_sf_hub(parquet = T),
+      SF_CT = get_sf_ct(parquet = T),
+      SF_COUNTY = get_sf_county(parquet = T),
+      SF_ZIP = get_sf_zip(parquet = T)
+    )
+
+
+  # ================= #
+  # ---- Servers ----
+  # ================= #
 
   diseaseOutcomesServer(
     "disease_outcomes",
     ct_level_data_all,
-    app_county
+    app_county,
+    shapefile_list
   )
 
-  equityMapServer("equity_map", ct_level_data_all)
+  equityMapServer("equity_map", ct_level_data_all, shapefile_list)
 
 }
