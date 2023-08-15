@@ -436,7 +436,7 @@ equityMapUI <- function(id) {
 
 }
 
-equityMapServer <- function(id, ct_level_data) {
+equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
   shiny::moduleServer(id, function(input, output, session){
 
@@ -445,9 +445,8 @@ equityMapServer <- function(id, ct_level_data) {
     # ============== #
 
     # > Shapefiles
-    SF_HUB <- get_sf_hub()
-    SF_CT <- get_sf_ct()
-    SF_COUNTY <- get_sf_county()
+    #SF_HUB <- get_sf_hub()
+    #SF_COUNTY <- get_sf_county()
 
 
     # > Point Level
@@ -489,6 +488,9 @@ equityMapServer <- function(id, ct_level_data) {
 
     pal_household_english <-
       emthub::PAL$pal_household_english
+
+    pal_hispanic_latino <-
+      emthub::PAL$pal_hispanic_latino
 
     pal_covid_case_rate <-
       emthub::PAL$pal_covid_case_rate
@@ -633,7 +635,7 @@ equityMapServer <- function(id, ct_level_data) {
 
       if (!rlang::is_empty(hub) && all(hub != "")) {
         SF_HUB_highlight <-
-          SF_HUB %>%
+          shapefile_list$SF_HUB %>%
           dplyr::filter(
             .data$HUB_Name %in% hub
           )
@@ -685,7 +687,7 @@ equityMapServer <- function(id, ct_level_data) {
 
       if (!rlang::is_empty(county) && all(county != "")) {
         SF_COUNTY_highlight <-
-          SF_COUNTY %>%
+          shapefile_list$SF_COUNTY %>%
           dplyr::filter(
             .data$COUNTY %in% county
           )
@@ -818,6 +820,62 @@ equityMapServer <- function(id, ct_level_data) {
             "<b>", GEOID, "</b>", "</br>",
             "<b>Pct Households Speaking Limited English: </b>",
             round(prcnt_limited_english_speaking_households, 4), "%"
+          ) %>% lapply(htmltools::HTML),
+
+          labelOptions = leaflet::labelOptions(
+            style = list(
+              "font-weight" = "normal",
+              padding = "3px 8px"
+            ),
+            textsize = "15px",
+            direction = "auto"
+          ),
+
+          highlight = leaflet::highlightOptions(
+            weight = 3,
+            fillOpacity = 0.1,
+            color = "black",
+            dashArray = "",
+            opacity = 0.5,
+            bringToFront = TRUE,
+            sendToBack = TRUE
+          ),
+          options = leaflet::pathOptions(pane = "layer_bottom")
+        ) %>%
+        leaflet.extras2::stopSpinner()
+    }
+
+    update_hispanic_latino <- function(range) {
+
+      hispanic_latino_data_filtered <-
+        ct_level_data %>%
+        dplyr::select(
+          .data$GEOID, .data$percent_hispanic_or_latino
+        ) %>%
+        dplyr::filter(
+          .data$percent_hispanic_or_latino >= 100*range[1],
+          .data$percent_hispanic_or_latino <= 100*range[2],
+        )
+
+      leaflet::leafletProxy("equity_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+        leaflet::clearGroup("Pct Hispanic or Latino") %>%
+        leaflet::addPolygons(
+          data = hispanic_latino_data_filtered,
+          group = "Pct Hispanic or Latino",
+          stroke = TRUE,
+          color = ~pal_hispanic_latino(percent_hispanic_or_latino),
+          weight = 1,
+          opacity = 0.5,
+          dashArray = "3",
+          fillOpacity = 0.5,
+          #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+
+          label = ~ paste0(
+            "<b>", GEOID, "</b>", "</br>",
+            "<b>Pct Hispanic Or Latino: </b>",
+            round(percent_hispanic_or_latino, 2), "%"
           ) %>% lapply(htmltools::HTML),
 
           labelOptions = leaflet::labelOptions(
@@ -1039,6 +1097,10 @@ equityMapServer <- function(id, ct_level_data) {
     })
 
     shiny::observe({
+      update_hispanic_latino(input$range_hispanic_latino)
+    })
+
+    shiny::observe({
       update_vax_provider_travel_time_by_car(input$selection_nearest_vax_by_car)
     })
 
@@ -1207,8 +1269,8 @@ equityMapServer <- function(id, ct_level_data) {
       leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%
 
-      # =========================== #
-      # ---- Point of Interest ----
+        # =========================== #
+        # ---- Point of Interest ----
       # ============================ #
       # leaflet::addCircleMarkers(
       #   data = point_of_interest,
@@ -1316,7 +1378,7 @@ equityMapServer <- function(id, ct_level_data) {
       # ========================== #
 
       leaflet::addPolygons(
-        data = SF_HUB,
+        data = shapefile_list$SF_HUB,
         group = "Hub Service Area",
         stroke = TRUE,
         color = "#555555",
@@ -1354,162 +1416,204 @@ equityMapServer <- function(id, ct_level_data) {
         # ============= #
         # ---- SVI ----
       # =============== #
-      leaflet::addPolygons(
-        #data = svi_data,
-        group = "Social Vulnerability Index (2018)",
-        stroke = TRUE,
-        color = ~pal_svi(recalc_svi_2018),
-        weight = 1,
-        opacity = 0.5,
-        dashArray = "3",
-        fillOpacity = 0.5,
-        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-
-        label = ~ paste0(
-          "<b>", GEOID, "</b>", "</br>", "<b>SVI: </b>", round(recalc_svi_2018, 4)
-        ) %>% lapply(htmltools::HTML),
-
-        labelOptions = leaflet::labelOptions(
-          style = list(
-            "font-weight" = "normal",
-            padding = "3px 8px"
-          ),
-          textsize = "15px",
-          direction = "auto"
-        ),
-
-        highlight = leaflet::highlightOptions(
-          weight = 3,
-          fillOpacity = 0.1,
-          color = "black",
-          dashArray = "",
-          opacity = 0.5,
-          bringToFront = TRUE,
-          sendToBack = TRUE
-        ),
-        options = leaflet::pathOptions(pane = "layer_bottom")
-      ) %>%
+      # leaflet::addPolygons(
+      #   #data = svi_data,
+      #   group = "Social Vulnerability Index (2018)",
+      #   stroke = TRUE,
+      #   color = ~pal_svi(recalc_svi_2018),
+      #   weight = 1,
+      #   opacity = 0.5,
+      #   dashArray = "3",
+      #   fillOpacity = 0.5,
+      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+      #
+      #   label = ~ paste0(
+      #     "<b>", GEOID, "</b>", "</br>", "<b>SVI: </b>", round(recalc_svi_2018, 4)
+      #   ) %>% lapply(htmltools::HTML),
+      #
+      #   labelOptions = leaflet::labelOptions(
+      #     style = list(
+      #       "font-weight" = "normal",
+      #       padding = "3px 8px"
+      #     ),
+      #     textsize = "15px",
+      #     direction = "auto"
+      #   ),
+      #
+      #   highlight = leaflet::highlightOptions(
+      #     weight = 3,
+      #     fillOpacity = 0.1,
+      #     color = "black",
+      #     dashArray = "",
+      #     opacity = 0.5,
+      #     bringToFront = TRUE,
+      #     sendToBack = TRUE
+      #   ),
+      #   options = leaflet::pathOptions(pane = "layer_bottom")
+      # ) %>%
 
         # =========================== #
         # ---- Household English ----
       # ============================ #
-      leaflet::addPolygons(
-        #data = household_english_data,
-        group = "Pct Households Speaking Limited English",
-        stroke = TRUE,
-        color = ~pal_household_english(prcnt_limited_english_speaking_households),
-        weight = 1,
-        opacity = 0.5,
-        dashArray = "3",
-        fillOpacity = 0.5,
-        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+      # leaflet::addPolygons(
+      #   #data = household_english_data,
+      #   group = "Pct Households Speaking Limited English",
+      #   stroke = TRUE,
+      #   color = ~pal_household_english(prcnt_limited_english_speaking_households),
+      #   weight = 1,
+      #   opacity = 0.5,
+      #   dashArray = "3",
+      #   fillOpacity = 0.5,
+      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+      #
+      #   label = ~ paste0(
+      #     "<b>", GEOID, "</b>", "</br>",
+      #     "<b>Pct Households Speaking Limited English: </b>",
+      #     round(prcnt_limited_english_speaking_households, 4), "%"
+      #   ) %>% lapply(htmltools::HTML),
+      #
+      #   labelOptions = leaflet::labelOptions(
+      #     style = list(
+      #       "font-weight" = "normal",
+      #       padding = "3px 8px"
+      #     ),
+      #     textsize = "15px",
+      #     direction = "auto"
+      #   ),
+      #
+      #   highlight = leaflet::highlightOptions(
+      #     weight = 3,
+      #     fillOpacity = 0.1,
+      #     color = "black",
+      #     dashArray = "",
+      #     opacity = 0.5,
+      #     bringToFront = TRUE,
+      #     sendToBack = TRUE
+      #   ),
+      #   options = leaflet::pathOptions(pane = "layer_bottom")
+      # ) %>%
 
-        label = ~ paste0(
-          "<b>", GEOID, "</b>", "</br>",
-          "<b>Pct Households Speaking Limited English: </b>",
-          round(prcnt_limited_english_speaking_households, 4), "%"
-        ) %>% lapply(htmltools::HTML),
+        # ============================== #
+        # ---- % Hispanic or Latino ----
+      # =============================== #
 
-        labelOptions = leaflet::labelOptions(
-          style = list(
-            "font-weight" = "normal",
-            padding = "3px 8px"
-          ),
-          textsize = "15px",
-          direction = "auto"
-        ),
-
-        highlight = leaflet::highlightOptions(
-          weight = 3,
-          fillOpacity = 0.1,
-          color = "black",
-          dashArray = "",
-          opacity = 0.5,
-          bringToFront = TRUE,
-          sendToBack = TRUE
-        ),
-        options = leaflet::pathOptions(pane = "layer_bottom")
-      ) %>%
+      # leaflet::addPolygons(
+      #   #data = household_english_data,
+      #   group = "Pct Hispanic or Latino",
+      #   stroke = TRUE,
+      #   color = ~pal_hispanic_latino(percent_hispanic_or_latino),
+      #   weight = 1,
+      #   opacity = 0.5,
+      #   dashArray = "3",
+      #   fillOpacity = 0.5,
+      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+      #
+      #   label = ~ paste0(
+      #     "<b>", GEOID, "</b>", "</br>",
+      #     "<b>Pct Hispanic Or Latino: </b>",
+      #     round(percent_hispanic_or_latino, 2), "%"
+      #   ) %>% lapply(htmltools::HTML),
+      #
+      #   labelOptions = leaflet::labelOptions(
+      #     style = list(
+      #       "font-weight" = "normal",
+      #       padding = "3px 8px"
+      #     ),
+      #     textsize = "15px",
+      #     direction = "auto"
+      #   ),
+      #
+      #   highlight = leaflet::highlightOptions(
+      #     weight = 3,
+      #     fillOpacity = 0.1,
+      #     color = "black",
+      #     dashArray = "",
+      #     opacity = 0.5,
+      #     bringToFront = TRUE,
+      #     sendToBack = TRUE
+      #   ),
+      #   options = leaflet::pathOptions(pane = "layer_bottom")
+      # ) %>%
 
         # ====================== #
         # ---- Transit Time ----
       # ======================= #
 
-      leaflet::addPolygons(
-        #data = vax_provider_travel_time_by_car,
-        group = "Min. (Car) to Nearest Pediatric Vax Provider",
-        stroke = TRUE,
-        color = ~pal_vax_provider_travel_time_by_car(travel_time_to_nearest_ped_vacc_provider_by_car),
-        weight = 1,
-        opacity = 0.5,
-        dashArray = "3",
-        fillOpacity = 0.5,
-        #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-
-        label = ~ paste0(
-          "<b>", GEOID, "</b>", "</br>",
-          "<b>Travel Time to Nearest Pediatric Vaccine Provider (Car): </b> </br>",
-          travel_time_to_nearest_ped_vacc_provider_by_car
-        ) %>% lapply(htmltools::HTML),
-
-        labelOptions = leaflet::labelOptions(
-          style = list(
-            "font-weight" = "normal",
-            padding = "3px 8px"
-          ),
-          textsize = "15px",
-          direction = "auto"
-        ),
-
-        highlight = leaflet::highlightOptions(
-          weight = 3,
-          fillOpacity = 0.1,
-          color = "black",
-          dashArray = "",
-          opacity = 0.5,
-          bringToFront = TRUE,
-          sendToBack = TRUE
-        ),
-        options = leaflet::pathOptions(pane = "layer_bottom")
-      ) %>%
-
-        leaflet::addPolygons(
-          #data = vax_provider_travel_time_by_transit,
-          group = "Min. (Tranist) to Nearest Pediatric Vax Provider",
-          stroke = TRUE,
-          color = ~pal_vax_provider_travel_time_by_transit(travel_time_to_nearest_ped_vacc_provider_by_transit),
-          weight = 1,
-          opacity = 0.5,
-          dashArray = "3",
-          fillOpacity = 0.5,
-          #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-
-          label = ~ paste0(
-            "<b>", GEOID, "</b>", "</br>",
-            "<b>Travel Time to Nearest Pediatric Vaccine Provider (Transit): </b> </br>",
-            travel_time_to_nearest_ped_vacc_provider_by_transit
-          ) %>% lapply(htmltools::HTML),
-
-          labelOptions = leaflet::labelOptions(
-            style = list(
-              "font-weight" = "normal",
-              padding = "3px 8px"
-            ),
-            textsize = "15px",
-            direction = "auto"
-          ),
-
-          highlight = leaflet::highlightOptions(
-            weight = 3,
-            fillOpacity = 0.1,
-            color = "black",
-            dashArray = "",
-            opacity = 0.5,
-            bringToFront = TRUE,
-            sendToBack = TRUE
-          ),
-          options = leaflet::pathOptions(pane = "layer_bottom")
-        ) %>%
+      # leaflet::addPolygons(
+      #   #data = vax_provider_travel_time_by_car,
+      #   group = "Min. (Car) to Nearest Pediatric Vax Provider",
+      #   stroke = TRUE,
+      #   color = ~pal_vax_provider_travel_time_by_car(travel_time_to_nearest_ped_vacc_provider_by_car),
+      #   weight = 1,
+      #   opacity = 0.5,
+      #   dashArray = "3",
+      #   fillOpacity = 0.5,
+      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+      #
+      #   label = ~ paste0(
+      #     "<b>", GEOID, "</b>", "</br>",
+      #     "<b>Travel Time to Nearest Pediatric Vaccine Provider (Car): </b> </br>",
+      #     travel_time_to_nearest_ped_vacc_provider_by_car
+      #   ) %>% lapply(htmltools::HTML),
+      #
+      #   labelOptions = leaflet::labelOptions(
+      #     style = list(
+      #       "font-weight" = "normal",
+      #       padding = "3px 8px"
+      #     ),
+      #     textsize = "15px",
+      #     direction = "auto"
+      #   ),
+      #
+      #   highlight = leaflet::highlightOptions(
+      #     weight = 3,
+      #     fillOpacity = 0.1,
+      #     color = "black",
+      #     dashArray = "",
+      #     opacity = 0.5,
+      #     bringToFront = TRUE,
+      #     sendToBack = TRUE
+      #   ),
+      #   options = leaflet::pathOptions(pane = "layer_bottom")
+      # ) %>%
+      #
+      #   leaflet::addPolygons(
+      #     #data = vax_provider_travel_time_by_transit,
+      #     group = "Min. (Tranist) to Nearest Pediatric Vax Provider",
+      #     stroke = TRUE,
+      #     color = ~pal_vax_provider_travel_time_by_transit(travel_time_to_nearest_ped_vacc_provider_by_transit),
+      #     weight = 1,
+      #     opacity = 0.5,
+      #     dashArray = "3",
+      #     fillOpacity = 0.5,
+      #     #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+      #
+      #     label = ~ paste0(
+      #       "<b>", GEOID, "</b>", "</br>",
+      #       "<b>Travel Time to Nearest Pediatric Vaccine Provider (Transit): </b> </br>",
+      #       travel_time_to_nearest_ped_vacc_provider_by_transit
+      #     ) %>% lapply(htmltools::HTML),
+      #
+      #     labelOptions = leaflet::labelOptions(
+      #       style = list(
+      #         "font-weight" = "normal",
+      #         padding = "3px 8px"
+      #       ),
+      #       textsize = "15px",
+      #       direction = "auto"
+      #     ),
+      #
+      #     highlight = leaflet::highlightOptions(
+      #       weight = 3,
+      #       fillOpacity = 0.1,
+      #       color = "black",
+      #       dashArray = "",
+      #       opacity = 0.5,
+      #       bringToFront = TRUE,
+      #       sendToBack = TRUE
+      #     ),
+      #     options = leaflet::pathOptions(pane = "layer_bottom")
+      #   ) %>%
 
 
         leaflet::addLayersControl(
@@ -1518,6 +1622,7 @@ equityMapServer <- function(id, ct_level_data) {
             "County COVID-19 Case Rate (Last 3wk)",
             "County Bivalent Booster Uptake",
             "Pct Households Speaking Limited English",
+            "Pct Hispanic or Latino",
             "Min. (Car) to Nearest Pediatric Vax Provider",
             "Min. (Tranist) to Nearest Pediatric Vax Provider",
             "Base Map"
