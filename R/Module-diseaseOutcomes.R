@@ -201,9 +201,16 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county) {
           name = app_county$value
         )
       )
+
+      if (app_county$value == "Mahoning") {
+        shinyjs::hide(
+          id = "global_county",
+          anim = FALSE
+        )
+      }
       #print("=======================")
       #print(input$global_county)
-    }, priority = 999)
+    })
 
     # > Point Level
     BUSINESS_LOCATION_DATA <- get_business_location()

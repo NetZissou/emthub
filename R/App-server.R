@@ -8,7 +8,7 @@
 server <- function(input, output, session) {
 
   app_county <- shiny::reactiveValues(
-    value = "Mahoning"
+    value = "Franklin"
   )
   shiny::observe(priority = 999, {
     query <- shiny::parseQueryString(session$clientData$url_search)
@@ -21,6 +21,11 @@ server <- function(input, output, session) {
       shiny::hideTab(
         inputId = "emt",
         target = "Equity Map"
+      )
+
+      shiny::updateTabsetPanel(
+        session, "emt",
+        selected = "Disease Outcomes Map"
       )
     }
   })

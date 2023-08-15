@@ -19,7 +19,7 @@ ui <- function() {
 
     sidebar = NULL,
 
-    selected = "Disease Outcomes Map",
+    #selected = "Equity Map",
 
     shiny::tags$head(
       # Note the wrapping of the string in HTML()
@@ -44,6 +44,8 @@ ui <- function() {
           shiny::h4("Launching EMT ...")
         )
       ),
+      waiter::autoWaiter(),
+      shinyjs::useShinyjs(),
       diseaseOutcomesUI("disease_outcomes")
     ),
 
