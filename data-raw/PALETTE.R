@@ -21,6 +21,13 @@ pal_household_english <-
     domain = ct_level_data$prcnt_limited_english_speaking_households
   )
 
+pal_hispanic_latino <-
+  leaflet::colorNumeric(
+    palette = "PuRd",
+    domain = ct_level_data$percent_hispanic_or_latino
+  )
+
+
 pal_covid_case_rate <-
   leaflet::colorNumeric(
     palette = "OrRd",
@@ -70,6 +77,7 @@ pal_birth_outcomes <- leaflet::colorFactor(
 PAL <- list(
   pal_svi = pal_svi,
   pal_household_english = pal_household_english,
+  pal_hispanic_latino = pal_hispanic_latino,
   pal_covid_case_rate = pal_covid_case_rate,
   pal_booster_rate = pal_booster_rate,
   pal_vax_provider_travel_time_by_car = pal_vax_provider_travel_time_by_car,

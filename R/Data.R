@@ -413,82 +413,125 @@ get_birth_outcomes <- function() {
 # - Infant Health Score
 # - Min Travel Time to Vax Provider
 
-get_ct_level_data <- function() {
+get_ct_level_data <- function(parquet = FALSE) {
 
-  # ct_level_data <-
-  #   readr::read_csv(
-  #     fs::path(
-  #       emthub::ROOT,
-  #       "Demographic",
-  #       "emt_oh_ctracts_dataset.csv"
-  #     )
-  #   ) %>%
-  #   dplyr::mutate(
-  #     censustract = as.character(.data$censustract)
-  #   ) %>%
-  #   dplyr::rename(
-  #     scaled_rank_sum = .data$`composite chronic disease burden score`
-  #   )
-  #
-  #
-  # birth_outcomes <-
-  #   get_birth_outcomes() %>%
-  #   dplyr::select(
-  #     censustract = census_tract,
-  #     infant_health_score_quantile,
-  #     infant_health_score
-  #   )
-  #
-  #
-  # vax_provider_travel_time_by_car <-
-  #   get_vax_provider_travel_time_by_car() %>%
-  #   dplyr::as_tibble() %>%
-  #   dplyr::select(
-  #     .data$GEOID, .data$travel_time_to_nearest_ped_vacc_provider_by_car
-  #   )
-  #
-  # vax_provider_travel_time_by_transit <-
-  #   get_vax_provider_travel_time_by_transit() %>%
-  #   dplyr::as_tibble() %>%
-  #   dplyr::select(
-  #     .data$GEOID, .data$travel_time_to_nearest_ped_vacc_provider_by_transit
-  #   )
-  #
-  #
-  # get_sf_ct() %>%
-  #   dplyr::select(.data$GEOID) %>%
-  #   dplyr::left_join(
-  #     ct_level_data,
-  #     by = c("GEOID" = "censustract")
-  #   ) %>%
-  #   dplyr::left_join(
-  #     birth_outcomes,
-  #     by = c("GEOID" = "censustract")
-  #   ) %>%
-  #   dplyr::left_join(
-  #     vax_provider_travel_time_by_car,
-  #     by = "GEOID"
-  #   ) %>%
-  #   dplyr::left_join(
-  #     vax_provider_travel_time_by_transit,
-  #     by = "GEOID"
-  #   ) %>%
-  #   sf::st_write(
-  #     fs::path(
-  #       emthub::ROOT,
-  #       "Demographic",
-  #       "emt_oh_ctracts_dataset.geojson"
-  #     )
-  #   )
+  if (parquet) {
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Demographic",
+        "emt_oh_ctracts_dataset.parquet"
+      )
+    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Demographic",
+        "emt_oh_ctracts_dataset.geojson"
+      ),
+      quiet=TRUE
+    )
+  }
+}
 
-  sf::st_read(
+update_ct_level_data <- function() {
+
+  ct_level_data_path <-
     fs::path(
       emthub::ROOT,
       "Demographic",
       "emt_oh_ctracts_dataset.geojson"
-    ),
-    quiet=TRUE
-  )
+    )
+
+  if (fs::file_exists(ct_level_data_path)) {
+    fs::file_delete(
+      ct_level_data_path
+    )
+
+    fs::file_delete(
+      fs::path(
+        emthub::ROOT,
+        "Demographic",
+        "emt_oh_ctracts_dataset.parquet"
+      )
+    )
+  }
+
+  ct_level_data <-
+    readr::read_csv(
+      fs::path(
+        emthub::ROOT,
+        "Demographic",
+        "emt_oh_ctracts_dataset.csv"
+      )
+    ) %>%
+    dplyr::mutate(
+      censustract = as.character(.data$censustract)
+    ) %>%
+    dplyr::rename(
+      scaled_rank_sum = .data$`composite chronic disease burden score`
+    )
+
+
+  birth_outcomes <-
+    get_birth_outcomes() %>%
+    dplyr::select(
+      censustract = .data$census_tract,
+      .data$infant_health_score_quantile,
+      .data$infant_health_score
+    )
+
+
+  vax_provider_travel_time_by_car <-
+    get_vax_provider_travel_time_by_car() %>%
+    dplyr::as_tibble() %>%
+    dplyr::select(
+      .data$GEOID, .data$travel_time_to_nearest_ped_vacc_provider_by_car
+    )
+
+  vax_provider_travel_time_by_transit <-
+    get_vax_provider_travel_time_by_transit() %>%
+    dplyr::as_tibble() %>%
+    dplyr::select(
+      .data$GEOID, .data$travel_time_to_nearest_ped_vacc_provider_by_transit
+    )
+
+
+  ct_level_data <-
+    get_sf_ct() %>%
+    dplyr::select(.data$GEOID) %>%
+    dplyr::left_join(
+      ct_level_data,
+      by = c("GEOID" = "censustract")
+    ) %>%
+    dplyr::left_join(
+      birth_outcomes,
+      by = c("GEOID" = "censustract")
+    ) %>%
+    dplyr::left_join(
+      vax_provider_travel_time_by_car,
+      by = "GEOID"
+    ) %>%
+    dplyr::left_join(
+      vax_provider_travel_time_by_transit,
+      by = "GEOID"
+    )
+
+    sf::st_write(
+      ct_level_data,
+      ct_level_data_path
+    )
+
+    sfarrow::st_write_parquet(
+      ct_level_data,
+      fs::path(
+        emthub::ROOT,
+        "Demographic",
+        "emt_oh_ctracts_dataset.parquet"
+      )
+    )
+
 }
 
 
@@ -502,15 +545,25 @@ get_ct_level_data <- function() {
 # ---- Shapefiles -----
 # ===================== #
 
-get_sf_county <- function() {
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Shapefile",
-      "sf_county_hub.geojson"
-    ),
-    quiet=TRUE
-  )
+get_sf_county <- function(parquet = F) {
+  if (parquet) {
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_county.parquet"
+      )
+    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_county_hub.geojson"
+      ),
+      quiet=TRUE
+    )
+  }
 }
 
 
@@ -518,16 +571,27 @@ get_sf_county <- function() {
 # ---- Shapefile: Hub Boundaries (State-wide) ----
 # ================================================ #
 
-get_sf_hub <- function() {
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Shapefile",
-      #"HUB_Counties_07.28.2023.geojson"
-      "sf_hub.geojson"
-    ),
-    quiet=TRUE
-  )
+get_sf_hub <- function(parquet = F) {
+
+  if (parquet) {
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_hub.parquet"
+      )
+    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        #"HUB_Counties_07.28.2023.geojson"
+        "sf_hub.geojson"
+      ),
+      quiet=TRUE
+    )
+  }
 }
 
 
@@ -563,30 +627,50 @@ get_sf_hub <- function() {
 # ---- Shapefile: Census Tract (State-wide) ----
 # ============================================== #
 
-get_sf_ct <- function() {
+get_sf_ct <- function(parquet = F) {
 
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Shapefile",
-      "sf_census_tract.geojson"
-    ),
-    quiet=TRUE
-  )
+  if (parquet) {
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_census_tract.parquet"
+      )
+    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_census_tract.geojson"
+      ),
+      quiet=TRUE
+    )
+  }
 }
 
 # =================================== #
 # ---- Shapefile: Zip (Mahoning) ----
 # =================================== #
 
-get_sf_zip <- function() {
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Shapefile",
-      "tl_2018_us_zcta510_for_Mahoning_County.geojson"
-    ),
-    quiet=TRUE
-  )
+get_sf_zip <- function(parquet = F) {
+  if (parquet) {
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_zip.parquet"
+      )
+    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "tl_2018_us_zcta510_for_Mahoning_County.geojson"
+      ),
+      quiet=TRUE
+    )
+  }
 }
 

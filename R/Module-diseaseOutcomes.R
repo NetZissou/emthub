@@ -165,7 +165,7 @@ diseaseOutcomesUI <- function(id) {
   )
 }
 
-diseaseOutcomesServer <- function(id, ct_level_data_all, app_county) {
+diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_list) {
 
   shiny::moduleServer(id, function(input, output, session){
 
@@ -237,9 +237,9 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county) {
     })
 
     # > Shapefiles
-    SF_ZIP <- get_sf_zip()
-    SF_CT <- get_sf_ct()
-    SF_COUNTY <- get_sf_county()
+    #SF_ZIP <- get_sf_zip()
+    #SF_CT <- get_sf_ct()
+    #SF_COUNTY <- get_sf_county()
 
     # > Pal
     pal_scaled_sum_rank <- emthub::PAL$pal_scaled_sum_rank
@@ -633,7 +633,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county) {
       shiny::req(!rlang::is_empty(input$global_county))
 
       centroid <-
-        SF_COUNTY %>%
+        shapefile_list$SF_COUNTY %>%
         dplyr::filter(.data$COUNTY == input$global_county) %>%
         dplyr::pull(.data$geometry) %>%
         sf::st_centroid() %>%
@@ -783,7 +783,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county) {
         # > Overlay: Zip ----
 
       leaflet::addPolygons(
-        data = SF_ZIP,
+        data = shapefile_list$SF_ZIP,
         group = "Zip Code",
         stroke = TRUE,
         color = "#555555",
