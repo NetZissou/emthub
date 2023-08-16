@@ -49,7 +49,7 @@ get_disease_data <- function() {
 # ---- Places Data (Mahoning) ----
 # ================================ #
 
-get_business_location <- function() {
+get_business_location <- function(parquet = FALSE) {
 
   # readr::read_csv(
   #   fs::path(
@@ -91,14 +91,25 @@ get_business_location <- function() {
   #       "mahoning_business_modified.csv"
   #     )
   #   )
-  readr::read_csv(
-    fs::path(
-      emthub::ROOT,
-      "Places",
-      "mahoning_business_modified.csv"
-    ),
-    lazy = TRUE
-  )
+  if (parquet) {
+    arrow::read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "mahoning_business_modified.parquet"
+      ),
+      as_data_frame = FALSE
+    )
+  } else {
+    readr::read_csv(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "mahoning_business_modified.csv"
+      ),
+      lazy = TRUE
+    )
+  }
 }
 
 
@@ -114,7 +125,8 @@ get_point_of_interest <- function(parquet = FALSE) {
         emthub::ROOT,
         "Places",
         "poi_for_ohio.parquet"
-      )
+      ),
+      as_data_frame = FALSE
     )
   } else {
     vroom::vroom(
@@ -294,7 +306,8 @@ get_vax_provider <- function(parquet = F) {
         emthub::ROOT,
         "Vaccine",
         "cdc_vax_providers.parquet"
-      )
+      ),
+      as_data_frame = FALSE
     )
   } else {
     readr::read_csv(
