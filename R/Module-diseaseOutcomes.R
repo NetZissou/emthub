@@ -36,6 +36,32 @@ diseaseOutcomesUI <- function(id) {
             bslib::nav_panel(
               'Places',
 
+
+
+              shiny::fluidRow(
+                shiny::column(
+                  width = 6,
+                  shiny::selectInput(
+                    inputId = shiny::NS(id, "filter_type"),
+                    label = "Type",
+                    choices = emthub::FILTER_TYPE_CHOICES,
+                    multiple = TRUE,
+                    width = "100%"
+                  )
+                ),
+                shiny::column(
+                  width = 6,
+                  shiny::selectInput(
+                    inputId = shiny::NS(id, "filter_city"),
+                    label = "City",
+                    choices = emthub::FILTER_CITY_CHOICES,
+                    multiple = TRUE,
+                    width = "100%"
+                  )
+                )
+              ),
+
+
               shiny::fluidRow(
                 shiny::column(
                   width = 6,
@@ -59,36 +85,8 @@ diseaseOutcomesUI <- function(id) {
                 )
               ),
 
-              shiny::fluidRow(
-                shiny::column(
-                  width = 6,
-                  shiny::selectInput(
-                    inputId = shiny::NS(id, "filter_city"),
-                    label = "City",
-                    choices = emthub::FILTER_CITY_CHOICES,
-                    multiple = TRUE,
-                    width = "100%"
-                  )
-                ),
-                shiny::column(
-                  width = 6,
-                  shiny::selectInput(
-                    inputId = shiny::NS(id, "filter_type"),
-                    label = "Type",
-                    choices = emthub::FILTER_TYPE_CHOICES,
-                    multiple = TRUE,
-                    width = "100%"
-                  )
-                )
-              ),
-
-
-              shiny::actionButton(
-                inputId = shiny::NS(id, "apply_filter_business"),
-                label = "Apply Filters"
-              ),
-
-              shiny::tags$hr(),
+              reactable_searchBar(shiny::NS(id, "business_table"), placeholder = "Search for Place of Interest ..."),
+              reactable_csvDownloadButton(shiny::NS(id, "business_table"), filename = "poi_disease_outcomes.csv"),
               shiny::helpText("Toggle to add places to the map"),
               reactable::reactableOutput(shiny::NS(id, "business_table"))
             ),
@@ -213,15 +211,15 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     })
 
     # > Point Level
-    BUSINESS_LOCATION_DATA <- get_business_location()
+    BUSINESS_LOCATION_DATA <- get_business_location(parquet = TRUE)
 
     business_data <-
       shiny::reactiveValues(
-        filtered = BUSINESS_LOCATION_DATA
+        filtered = NULL
       )
 
     # > Regional Rates
-    ACCESSIBILITY_DATA <- get_acc_data()
+    ACCESSIBILITY_DATA <- get_acc_data(parquet = TRUE)
     acc_data <-
       shiny::reactiveValues(
         value = NULL,
@@ -400,14 +398,23 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
             )
         }
 
-        business_data$filtered <- filtered
+        if (rlang::is_empty(input$filter_ct) && rlang::is_empty(input$filter_zip) &&
+            rlang::is_empty(input$filter_city) && rlang::is_empty(input$filter_type)) {
+          business_data$filtered <- NULL
+        } else {
+          business_data$filtered <- filtered
+        }
       }
 
-    shiny::observeEvent(input$apply_filter_business,{
-
+    shiny::observe({
       updateBusiness()
-
-    })
+    }) %>%
+      shiny::bindEvent(
+        input$filter_type,
+        input$filter_city,
+        input$filter_ct,
+        input$filter_zip
+      )
 
 
     # > Weight Score ----
@@ -1004,6 +1011,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     # Business Table ----
 
     output$business_table <- reactable::renderReactable({
+      shiny::req(!rlang::is_empty(business_data$filtered))
 
       business_data$filtered %>%
         dplyr::select(
@@ -1015,6 +1023,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           `Zip` = .data$`Zip Code`,
           `Operational` = .data$operational_status
         ) %>%
+        dplyr::collect() %>%
         reactable::reactable(
           # Table Format
           filterable = TRUE,
@@ -1037,7 +1046,8 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
       if (!is.null(selected_business_index())) {
 
         selected_business$value <-
-          business_data$filtered[selected_business_index(),]
+          business_data$filtered[selected_business_index(),] %>%
+          dplyr::collect()
 
 
       } else {

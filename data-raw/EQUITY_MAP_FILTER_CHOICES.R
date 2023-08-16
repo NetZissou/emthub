@@ -23,6 +23,9 @@ CHOICES_VAX_CITY <- sort(unique(vax_provider$City))
 
 CHOICES_POINT_OF_INTEREST <-
   sort(unique(get_point_of_interest()$Type))
+names(CHOICES_POINT_OF_INTEREST) <- stringr::str_to_title(
+  CHOICES_POINT_OF_INTEREST
+)
 
 CHOICES_NEAREST_VAX_BY_CAR <-
   sort(unique(get_vax_provider_travel_time_by_car()$travel_time_to_nearest_ped_vacc_provider_by_car))

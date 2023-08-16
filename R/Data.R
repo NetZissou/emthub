@@ -2,18 +2,28 @@
 # ============= #
 # ---- Acc ----
 # ============= #
-get_acc_data <- function() {
+get_acc_data <- function(parquet = FALSE) {
 
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Accessibility",
-      "mahoning_accessibility_ctracts_2010.geojson"
+  if (parquet) {
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Accessibility",
+        "mahoning_accessibility_ctracts_2010.parquet"
+      )
     )
-  ) %>%
-    dplyr::mutate(
-      censustract = as.character(.data$censustract)
-    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Accessibility",
+        "mahoning_accessibility_ctracts_2010.geojson"
+      )
+    ) %>%
+      dplyr::mutate(
+        censustract = as.character(.data$censustract)
+      )
+  }
 }
 
 # ====================== #
@@ -39,7 +49,7 @@ get_disease_data <- function() {
 # ---- Places Data (Mahoning) ----
 # ================================ #
 
-get_business_location <- function() {
+get_business_location <- function(parquet = FALSE) {
 
   # readr::read_csv(
   #   fs::path(
@@ -81,14 +91,25 @@ get_business_location <- function() {
   #       "mahoning_business_modified.csv"
   #     )
   #   )
-  readr::read_csv(
-    fs::path(
-      emthub::ROOT,
-      "Places",
-      "mahoning_business_modified.csv"
-    ),
-    lazy = TRUE
-  )
+  if (parquet) {
+    arrow::read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "mahoning_business_modified.parquet"
+      ),
+      as_data_frame = FALSE
+    )
+  } else {
+    readr::read_csv(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "mahoning_business_modified.csv"
+      ),
+      lazy = TRUE
+    )
+  }
 }
 
 
@@ -96,15 +117,27 @@ get_business_location <- function() {
 # ---- Point of Interest (State-wide) ----
 # ======================================== #
 
-get_point_of_interest <- function() {
+get_point_of_interest <- function(parquet = FALSE) {
 
-  vroom::vroom(
-    fs::path(
-      emthub::ROOT,
-      "Places",
-      "poi_for_ohio.csv"
+  if (parquet) {
+    arrow::read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "poi_for_ohio.parquet"
+      ),
+      as_data_frame = FALSE
     )
-  )
+  } else {
+    vroom::vroom(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "poi_for_ohio.csv"
+      )
+    )
+  }
+
     # dplyr::mutate(
     #   popup = glue::glue(
     #     "
@@ -225,8 +258,7 @@ get_pct_household_limited_english <- function() {
 # ---- Vaccine: Vax Provider ----
 # =============================== #
 
-get_vax_provider <- function() {
-
+update_vax_provider <- function() {
   readr::read_csv(
     fs::path(
       emthub::ROOT,
@@ -255,7 +287,59 @@ get_vax_provider <- function() {
         county = .data$County,
         zip = .data$Zip
       )
+    ) %>%
+    arrow::write_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "cdc_vax_providers.parquet"
+      )
     )
+}
+
+get_vax_provider <- function(parquet = F) {
+
+  if (parquet) {
+
+    arrow::read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "cdc_vax_providers.parquet"
+      ),
+      as_data_frame = FALSE
+    )
+  } else {
+    readr::read_csv(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "cdc_vax_providers.csv"
+      ),
+      lazy = TRUE
+    ) %>%
+      dplyr::mutate(
+        Census_Tract = as.character(.data$Census_Tract),
+        popup = glue::glue(
+          "
+        <h6><a href='{website}' target='_blank'>{name}</a></h6></hr>
+        <b>Type: </b>{type}</br>
+        <b>Phone: </b>{phone}</br>
+        <b>Addr: </b>{street_addr}, {city}, {county}, {zip} </br>
+        <b><a href='{prescreening_site}' target='_blank'>Prescreening</a></b></br>
+        ",
+          name = .data$Place_Name,
+          type = .data$Vaccine_Type,
+          phone = .data$Phone,
+          website = .data$Website,
+          prescreening_site = .data$Prescreening_Website,
+          street_addr = .data$Address,
+          city = .data$City,
+          county = .data$County,
+          zip = .data$Zip
+        )
+      )
+  }
 }
 
 # ===================================== #
@@ -343,7 +427,7 @@ get_vax_provider_travel_time_by_transit <- function() {
 # ---- COVID: County Case Rate & Booster (State-wide) ----
 # ======================================================== #
 
-get_covid_data_county<- function() {
+get_covid_data_county<- function(parquet = FALSE) {
 
   # get_sf_county() %>%
   # dplyr::left_join(
@@ -369,14 +453,25 @@ get_covid_data_county<- function() {
   #     )
   #   )
 
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Vaccine",
-      "Ohio_COVID_case_and_vacc_rates.geojson"
-    ),
-    quiet=TRUE
-  )
+  if (parquet) {
+
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "Ohio_COVID_case_and_vacc_rates.parquet"
+      )
+    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "Ohio_COVID_case_and_vacc_rates.geojson"
+      ),
+      quiet=TRUE
+    )
+  }
 }
 
 # ======================== #
