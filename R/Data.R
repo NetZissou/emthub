@@ -2,18 +2,28 @@
 # ============= #
 # ---- Acc ----
 # ============= #
-get_acc_data <- function() {
+get_acc_data <- function(parquet = FALSE) {
 
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Accessibility",
-      "mahoning_accessibility_ctracts_2010.geojson"
+  if (parquet) {
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Accessibility",
+        "mahoning_accessibility_ctracts_2010.parquet"
+      )
     )
-  ) %>%
-    dplyr::mutate(
-      censustract = as.character(.data$censustract)
-    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Accessibility",
+        "mahoning_accessibility_ctracts_2010.geojson"
+      )
+    ) %>%
+      dplyr::mutate(
+        censustract = as.character(.data$censustract)
+      )
+  }
 }
 
 # ====================== #
@@ -343,7 +353,7 @@ get_vax_provider_travel_time_by_transit <- function() {
 # ---- COVID: County Case Rate & Booster (State-wide) ----
 # ======================================================== #
 
-get_covid_data_county<- function() {
+get_covid_data_county<- function(parquet = FALSE) {
 
   # get_sf_county() %>%
   # dplyr::left_join(
@@ -369,14 +379,25 @@ get_covid_data_county<- function() {
   #     )
   #   )
 
-  sf::st_read(
-    fs::path(
-      emthub::ROOT,
-      "Vaccine",
-      "Ohio_COVID_case_and_vacc_rates.geojson"
-    ),
-    quiet=TRUE
-  )
+  if (parquet) {
+
+    sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "Ohio_COVID_case_and_vacc_rates.parquet"
+      )
+    )
+  } else {
+    sf::st_read(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "Ohio_COVID_case_and_vacc_rates.geojson"
+      ),
+      quiet=TRUE
+    )
+  }
 }
 
 # ======================== #

@@ -459,7 +459,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
     # > Regional Rate
     # > County Level
-    covid_data <- get_covid_data_county()
+    covid_data <- get_covid_data_county(parquet = TRUE)
 
     # > Census Tract Level
     # NOTE: USE ct_level_data

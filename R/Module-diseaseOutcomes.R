@@ -221,7 +221,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
       )
 
     # > Regional Rates
-    ACCESSIBILITY_DATA <- get_acc_data()
+    ACCESSIBILITY_DATA <- get_acc_data(parquet = TRUE)
     acc_data <-
       shiny::reactiveValues(
         value = NULL,
