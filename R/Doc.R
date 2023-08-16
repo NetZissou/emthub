@@ -2,6 +2,8 @@
 # "DISEASE_DATA"
 #' Disease data outcomes
 "DISEASE_OUTCOMES"
+#' Disease data vars
+"DISEASE_DATA_VARS"
 #' Census tract shapefile for Mahoning County
 # "SF_CENSUS_TRACT"
 #' ZIP shapefile for Mahoning County
@@ -28,3 +30,9 @@
 "ROOT"
 #' EQUITY_MAP_FILTER_CHOICES
 "EQUITY_MAP_FILTER_CHOICES"
+#' BIRTH_OUTCOMES_PAL
+"BIRTH_OUTCOMES_PAL"
+#' Store all tokens used in the app
+"TOKENS"
+#' PAL
+"PAL"

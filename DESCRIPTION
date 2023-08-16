@@ -20,31 +20,41 @@ Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.2
 Imports: 
+    arrow,
     bslib,
     crosstalk,
     devtools,
+    docopt,
     dplyr,
+    fontawesome,
     fs,
     ggplot2,
     glue,
     HatchedPolygons (>= 0.2.0.9000),
     highcharter,
     htmltools,
+    httr2,
     leaflet,
+    leaflet.extras,
+    leaflet.extras2,
     magrittr,
     purrr,
-    reactable,
+    reactable (>= 0.4.4),
     readr,
     rlang,
     sf,
+    sfarrow,
     shiny,
+    shinyjs,
     sortable,
     stringr,
     tibble,
+    tidygeocoder,
     tidyr,
     tidyselect,
     urltools,
-    vroom
+    vroom,
+    waiter
 Depends: 
     R (>= 2.10)
 LazyData: true
