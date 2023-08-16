@@ -301,10 +301,8 @@ equityMapUI <- function(id) {
         #   shiny::NS(id, "update_vax_provider_tbl"),
         #   label = "Find Provider"
         # ),
-
-        reactable_csvDownloadButton(shiny::NS(id, "vax_provider_table"), filename = "vaccine_provider.csv"),
-        #shiny::tags$hr(),
         reactable_searchBar(shiny::NS(id, "vax_provider_table"), placeholder = "Search for providers ..."),
+        reactable_csvDownloadButton(shiny::NS(id, "vax_provider_table"), filename = "vaccine_provider.csv"),
         shiny::helpText("Toggle to add places to the map"),
         reactable::reactableOutput(shiny::NS(id, "vax_provider_table"))
       ),
@@ -312,8 +310,32 @@ equityMapUI <- function(id) {
 
       bslib::nav_panel(
         title = "Places",
-        bslib::card_body(
-        )
+        shiny::fluidRow(
+          shiny::column(
+            width = 6,
+            shiny::selectInput(
+              shiny::NS(id, "selection_poi_type"),
+              label = "Type",
+              choices = emthub::EQUITY_MAP_FILTER_CHOICES$point_of_interest,
+              multiple = TRUE
+            )
+          ),
+
+          shiny::column(
+            width = 6,
+            shiny::selectInput(
+              shiny::NS(id, "selection_poi_hub"),
+              label = "Hub",
+              choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
+              multiple = TRUE
+            )
+          )
+        ),
+
+        reactable_searchBar(shiny::NS(id, "poi_table"), placeholder = "Search for Place of Interest ..."),
+        reactable_csvDownloadButton(shiny::NS(id, "poi_table"), filename = "poi.csv"),
+        shiny::helpText("Toggle to add places to the map"),
+        reactable::reactableOutput(shiny::NS(id, "poi_table"))
       ),
 
       bslib::nav_panel(
@@ -450,16 +472,18 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
 
     # > Point Level
-    vax_provider <- get_vax_provider()
+    vax_provider <- get_vax_provider(parquet = TRUE)
     vax_provider_reactive <- shiny::reactiveValues(
       filtered = NULL
     )
-    #point_of_interest <-get_point_of_interest()
-
+    poi <- get_point_of_interest(parquet = TRUE)
+    poi_reactive <- shiny::reactiveValues(
+      filtered = NULL
+    )
 
     # > Regional Rate
     # > County Level
-    covid_data <- get_covid_data_county()
+    covid_data <- get_covid_data_county(parquet = TRUE)
 
     # > Census Tract Level
     # NOTE: USE ct_level_data
@@ -568,7 +592,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     # ---- Apply Filters ----
     # ======================= #
     update_vax_provider <- function(
-      type, ct, city, zip, county, hubs
+      type, hubs
     ) {
 
       filtered <- vax_provider
@@ -627,7 +651,41 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           )
       }
 
-      vax_provider_reactive$filtered <- filtered
+      if (rlang::is_empty(type) && rlang::is_empty(hubs)) {
+        vax_provider_reactive$filtered <- NULL
+      } else {
+        vax_provider_reactive$filtered <- filtered
+      }
+    }
+
+    update_poi <- function(type, hubs) {
+
+      filtered <- poi
+
+      if (!rlang::is_empty(type)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$Type %in% type
+          )
+      }
+
+      if (!rlang::is_empty(hubs)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$hub %in% hubs
+          )
+      }
+
+      if (rlang::is_empty(type) && rlang::is_empty(hubs)) {
+        poi_reactive$filtered <- NULL
+      } else {
+        poi_reactive$filtered <- filtered
+      }
+
     }
 
 
@@ -1034,51 +1092,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         ) %>%
         leaflet.extras2::stopSpinner()
     }
-    # update_point_of_interest <- function(type) {
-    #
-    #   leaflet::addCircleMarkers(
-    #     data =
-    #       point_of_interest %>%
-    #       dplyr::filter(
-    #         Type %in% input$selection_point_of_interest
-    #       ),
-    #     lat = ~Latitude,
-    #     lng = ~Longitude,
-    #     label = ~paste0("<b>", Type, "</b>", "</br>", Company) %>% lapply(htmltools::HTML),
-    #     popup = ~popup,
-    #     labelOptions = leaflet::labelOptions(
-    #       style = list(
-    #         "font-weight" = "normal",
-    #         padding = "3px 8px"
-    #       ),
-    #       textsize = "15px",
-    #       direction = "auto"
-    #     ),
-    #     fillColor = "#74a9cf",
-    #     fillOpacity = 1,
-    #     stroke = F,
-    #     group = "Point of Interest",
-    #     options = leaflet::pathOptions(pane = "layer_top")
-    #   )
-    # }
 
-
-    shiny::observeEvent(input$apply, {
-
-      # if (!rlang::is_empty(input$selection_vax_type)) {
-      #
-      #   update_vax_provider(type = input$selection_vax_type)
-      # }
-
-      # update_HUB_highlight(input$selection_hub)
-      # update_county_highlight(input$selection_county)
-      #
-      # update_SVI(input$range_svi)
-      # update_household_english(input$range_english)
-      #
-      # update_vax_provider_travel_time_by_car(input$selection_nearest_vax_by_car)
-      # update_vax_provider_travel_time_by_transit(input$selection_nearest_vax_by_transit)
-    })
 
     shiny::observe({
       update_HUB_highlight(input$selection_hub)
@@ -1150,16 +1164,26 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     shiny::observe({
       update_vax_provider(
         input$selection_vax_provider_type,
-        input$selection_vax_ct,
-        input$selection_vax_city,
-        input$selection_vax_zip,
-        input$selection_vax_county,
+        # input$selection_vax_ct,
+        # input$selection_vax_city,
+        # input$selection_vax_zip,
+        # input$selection_vax_county,
         input$selection_vax_provider_hub
+      )
+    })
+
+    shiny::observe({
+      update_poi(
+        input$selection_poi_type,
+        input$selection_poi_hub
       )
     })
 
 
 
+    # ============================ #
+    # ---- Vax Provider Table ----
+    # ============================ #
 
     output$vax_provider_table <- reactable::renderReactable({
       shiny::req(!rlang::is_empty(vax_provider_reactive$filtered))
@@ -1179,6 +1203,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           Zip = .data$Zip,
           `Census Tract` = .data$Census_Tract
         ) %>%
+        dplyr::collect() %>%
         reactable::reactable(
           # Table Format
           filterable = TRUE,
@@ -1201,7 +1226,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       if (!is.null(selected_vax_provider_index())) {
 
         selected_vax_provider$value <-
-          vax_provider_reactive$filtered[selected_vax_provider_index(),]
+          vax_provider_reactive$filtered[selected_vax_provider_index(),] %>%
+          dplyr::collect()
 
 
       } else {
@@ -1247,6 +1273,94 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     })
 
 
+    # =================== #
+    # ---- POI Table ----
+    # =================== #
+    output$poi_table <- reactable::renderReactable({
+      shiny::req(!rlang::is_empty(poi_reactive$filtered))
+
+      poi_reactive$filtered %>%
+        dplyr::arrange(.data$Company) %>%
+        dplyr::select(
+          Name = .data$Company,
+          Type = .data$Type,
+          Hub = .data$hub,
+          City = .data$City,
+          County = .data$county,
+          State = .data$State,
+          Zip = .data$Zipcode,
+          `Census Tract` = .data$census_tract,
+          Addr = .data$`Address Line 1`
+        ) %>%
+        dplyr::collect() %>%
+        reactable::reactable(
+          # Table Format
+          filterable = TRUE,
+          outlined = TRUE,
+          # Selection
+          selection = "multiple", onClick = "select",
+          highlight = TRUE,
+          theme = reactable::reactableTheme(
+            rowSelectedStyle = list(backgroundColor = "#eee", boxShadow = "inset 2px 0 0 0 #ffa62d")
+          ),
+          # Table Size
+          defaultPageSize = 5, minRows = 5
+        )
+    })
+
+    selected_poi_index <- shiny::reactive(reactable::getReactableState("poi_table", "selected"))
+    selected_poi <- shiny::reactiveValues(value = NULL)
+    shiny::observe({
+
+      if (!is.null(selected_poi_index())) {
+
+        selected_poi$value <-
+          poi_reactive$filtered[selected_poi_index(),] %>%
+          dplyr::collect()
+
+
+      } else {
+        selected_poi$value <- NULL
+      }
+
+
+      if (!rlang::is_empty(selected_poi$value)) {
+
+        leaflet::leafletProxy("equity_map") %>%
+          leaflet.extras2::addSpinner() %>%
+          leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+          leaflet::clearGroup("Point of Interest") %>%
+          leaflet::addAwesomeMarkers(
+            data = selected_poi$value,
+            group = "Point of Interest",
+            lng = ~Longitude, lat = ~Latitude,
+            icon = leaflet::makeAwesomeIcon(
+              text = fontawesome::fa("location-crosshairs"),
+              iconColor = 'white',
+              markerColor = "black"
+            ),
+            popup = ~popup,
+            clusterOptions = leaflet::markerClusterOptions(),
+            labelOptions = leaflet::labelOptions(
+              style = list(
+                "font-size" = "15px",
+                "font-style" = "bold",
+                "border-color" = "rgba(0,0,0,0.5)"
+              )
+            ),
+            options = leaflet::pathOptions(pane = "layer_top")
+          ) %>%
+          leaflet.extras2::stopSpinner()
+
+      } else {
+
+        leaflet::leafletProxy("equity_map") %>%
+          leaflet::clearGroup("Point of Interest")
+      }
+
+    })
+
+
     # ==================== #
     # ---- Equity Map ----
     # ==================== #
@@ -1268,30 +1382,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       # =================== #
       leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%
-
-        # =========================== #
-        # ---- Point of Interest ----
-      # ============================ #
-      # leaflet::addCircleMarkers(
-      #   data = point_of_interest,
-      #   lat = ~Latitude,
-      #   lng = ~Longitude,
-      #   label = ~paste0("<b>", Type, "</b>", "</br>", Company) %>% lapply(htmltools::HTML),
-      #   popup = ~popup,
-      #   labelOptions = leaflet::labelOptions(
-      #     style = list(
-      #       "font-weight" = "normal",
-      #       padding = "3px 8px"
-      #     ),
-      #     textsize = "15px",
-      #     direction = "auto"
-      #   ),
-      #   fillColor = "#74a9cf",
-      #   fillOpacity = 1,
-      #   stroke = F,
-      #   group = "Point of Interest",
-      #   options = leaflet::pathOptions(pane = "layer_top")
-      # ) %>%
 
       # ========================= #
       # ---- COVID Case Rate ----
@@ -1413,209 +1503,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         options = leaflet::pathOptions(pane = "layer_top")
       ) %>%
 
-        # ============= #
-        # ---- SVI ----
-      # =============== #
-      # leaflet::addPolygons(
-      #   #data = svi_data,
-      #   group = "Social Vulnerability Index (2018)",
-      #   stroke = TRUE,
-      #   color = ~pal_svi(recalc_svi_2018),
-      #   weight = 1,
-      #   opacity = 0.5,
-      #   dashArray = "3",
-      #   fillOpacity = 0.5,
-      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-      #
-      #   label = ~ paste0(
-      #     "<b>", GEOID, "</b>", "</br>", "<b>SVI: </b>", round(recalc_svi_2018, 4)
-      #   ) %>% lapply(htmltools::HTML),
-      #
-      #   labelOptions = leaflet::labelOptions(
-      #     style = list(
-      #       "font-weight" = "normal",
-      #       padding = "3px 8px"
-      #     ),
-      #     textsize = "15px",
-      #     direction = "auto"
-      #   ),
-      #
-      #   highlight = leaflet::highlightOptions(
-      #     weight = 3,
-      #     fillOpacity = 0.1,
-      #     color = "black",
-      #     dashArray = "",
-      #     opacity = 0.5,
-      #     bringToFront = TRUE,
-      #     sendToBack = TRUE
-      #   ),
-      #   options = leaflet::pathOptions(pane = "layer_bottom")
-      # ) %>%
-
-        # =========================== #
-        # ---- Household English ----
-      # ============================ #
-      # leaflet::addPolygons(
-      #   #data = household_english_data,
-      #   group = "Pct Households Speaking Limited English",
-      #   stroke = TRUE,
-      #   color = ~pal_household_english(prcnt_limited_english_speaking_households),
-      #   weight = 1,
-      #   opacity = 0.5,
-      #   dashArray = "3",
-      #   fillOpacity = 0.5,
-      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-      #
-      #   label = ~ paste0(
-      #     "<b>", GEOID, "</b>", "</br>",
-      #     "<b>Pct Households Speaking Limited English: </b>",
-      #     round(prcnt_limited_english_speaking_households, 4), "%"
-      #   ) %>% lapply(htmltools::HTML),
-      #
-      #   labelOptions = leaflet::labelOptions(
-      #     style = list(
-      #       "font-weight" = "normal",
-      #       padding = "3px 8px"
-      #     ),
-      #     textsize = "15px",
-      #     direction = "auto"
-      #   ),
-      #
-      #   highlight = leaflet::highlightOptions(
-      #     weight = 3,
-      #     fillOpacity = 0.1,
-      #     color = "black",
-      #     dashArray = "",
-      #     opacity = 0.5,
-      #     bringToFront = TRUE,
-      #     sendToBack = TRUE
-      #   ),
-      #   options = leaflet::pathOptions(pane = "layer_bottom")
-      # ) %>%
-
-        # ============================== #
-        # ---- % Hispanic or Latino ----
-      # =============================== #
-
-      # leaflet::addPolygons(
-      #   #data = household_english_data,
-      #   group = "Pct Hispanic or Latino",
-      #   stroke = TRUE,
-      #   color = ~pal_hispanic_latino(percent_hispanic_or_latino),
-      #   weight = 1,
-      #   opacity = 0.5,
-      #   dashArray = "3",
-      #   fillOpacity = 0.5,
-      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-      #
-      #   label = ~ paste0(
-      #     "<b>", GEOID, "</b>", "</br>",
-      #     "<b>Pct Hispanic Or Latino: </b>",
-      #     round(percent_hispanic_or_latino, 2), "%"
-      #   ) %>% lapply(htmltools::HTML),
-      #
-      #   labelOptions = leaflet::labelOptions(
-      #     style = list(
-      #       "font-weight" = "normal",
-      #       padding = "3px 8px"
-      #     ),
-      #     textsize = "15px",
-      #     direction = "auto"
-      #   ),
-      #
-      #   highlight = leaflet::highlightOptions(
-      #     weight = 3,
-      #     fillOpacity = 0.1,
-      #     color = "black",
-      #     dashArray = "",
-      #     opacity = 0.5,
-      #     bringToFront = TRUE,
-      #     sendToBack = TRUE
-      #   ),
-      #   options = leaflet::pathOptions(pane = "layer_bottom")
-      # ) %>%
-
-        # ====================== #
-        # ---- Transit Time ----
-      # ======================= #
-
-      # leaflet::addPolygons(
-      #   #data = vax_provider_travel_time_by_car,
-      #   group = "Min. (Car) to Nearest Pediatric Vax Provider",
-      #   stroke = TRUE,
-      #   color = ~pal_vax_provider_travel_time_by_car(travel_time_to_nearest_ped_vacc_provider_by_car),
-      #   weight = 1,
-      #   opacity = 0.5,
-      #   dashArray = "3",
-      #   fillOpacity = 0.5,
-      #   #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-      #
-      #   label = ~ paste0(
-      #     "<b>", GEOID, "</b>", "</br>",
-      #     "<b>Travel Time to Nearest Pediatric Vaccine Provider (Car): </b> </br>",
-      #     travel_time_to_nearest_ped_vacc_provider_by_car
-      #   ) %>% lapply(htmltools::HTML),
-      #
-      #   labelOptions = leaflet::labelOptions(
-      #     style = list(
-      #       "font-weight" = "normal",
-      #       padding = "3px 8px"
-      #     ),
-      #     textsize = "15px",
-      #     direction = "auto"
-      #   ),
-      #
-      #   highlight = leaflet::highlightOptions(
-      #     weight = 3,
-      #     fillOpacity = 0.1,
-      #     color = "black",
-      #     dashArray = "",
-      #     opacity = 0.5,
-      #     bringToFront = TRUE,
-      #     sendToBack = TRUE
-      #   ),
-      #   options = leaflet::pathOptions(pane = "layer_bottom")
-      # ) %>%
-      #
-      #   leaflet::addPolygons(
-      #     #data = vax_provider_travel_time_by_transit,
-      #     group = "Min. (Tranist) to Nearest Pediatric Vax Provider",
-      #     stroke = TRUE,
-      #     color = ~pal_vax_provider_travel_time_by_transit(travel_time_to_nearest_ped_vacc_provider_by_transit),
-      #     weight = 1,
-      #     opacity = 0.5,
-      #     dashArray = "3",
-      #     fillOpacity = 0.5,
-      #     #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-      #
-      #     label = ~ paste0(
-      #       "<b>", GEOID, "</b>", "</br>",
-      #       "<b>Travel Time to Nearest Pediatric Vaccine Provider (Transit): </b> </br>",
-      #       travel_time_to_nearest_ped_vacc_provider_by_transit
-      #     ) %>% lapply(htmltools::HTML),
-      #
-      #     labelOptions = leaflet::labelOptions(
-      #       style = list(
-      #         "font-weight" = "normal",
-      #         padding = "3px 8px"
-      #       ),
-      #       textsize = "15px",
-      #       direction = "auto"
-      #     ),
-      #
-      #     highlight = leaflet::highlightOptions(
-      #       weight = 3,
-      #       fillOpacity = 0.1,
-      #       color = "black",
-      #       dashArray = "",
-      #       opacity = 0.5,
-      #       bringToFront = TRUE,
-      #       sendToBack = TRUE
-      #     ),
-      #     options = leaflet::pathOptions(pane = "layer_bottom")
-      #   ) %>%
-
-
         leaflet::addLayersControl(
           baseGroups = c(
             "Social Vulnerability Index (2018)",
@@ -1637,8 +1524,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         ) %>%
         leaflet::hideGroup(
           c(
-            "Hub Service Area",
-            "Point of Interest"
+            "Hub Service Area"
           )
         )
 
