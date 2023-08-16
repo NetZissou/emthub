@@ -106,15 +106,26 @@ get_business_location <- function() {
 # ---- Point of Interest (State-wide) ----
 # ======================================== #
 
-get_point_of_interest <- function() {
+get_point_of_interest <- function(parquet = FALSE) {
 
-  vroom::vroom(
-    fs::path(
-      emthub::ROOT,
-      "Places",
-      "poi_for_ohio.csv"
+  if (parquet) {
+    arrow::read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "poi_for_ohio.parquet"
+      )
     )
-  )
+  } else {
+    vroom::vroom(
+      fs::path(
+        emthub::ROOT,
+        "Places",
+        "poi_for_ohio.csv"
+      )
+    )
+  }
+
     # dplyr::mutate(
     #   popup = glue::glue(
     #     "
@@ -235,8 +246,7 @@ get_pct_household_limited_english <- function() {
 # ---- Vaccine: Vax Provider ----
 # =============================== #
 
-get_vax_provider <- function() {
-
+update_vax_provider <- function() {
   readr::read_csv(
     fs::path(
       emthub::ROOT,
@@ -265,7 +275,58 @@ get_vax_provider <- function() {
         county = .data$County,
         zip = .data$Zip
       )
+    ) %>%
+    arrow::write_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "cdc_vax_providers.parquet"
+      )
     )
+}
+
+get_vax_provider <- function(parquet = F) {
+
+  if (parquet) {
+
+    arrow::read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "cdc_vax_providers.parquet"
+      )
+    )
+  } else {
+    readr::read_csv(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "cdc_vax_providers.csv"
+      ),
+      lazy = TRUE
+    ) %>%
+      dplyr::mutate(
+        Census_Tract = as.character(.data$Census_Tract),
+        popup = glue::glue(
+          "
+        <h6><a href='{website}' target='_blank'>{name}</a></h6></hr>
+        <b>Type: </b>{type}</br>
+        <b>Phone: </b>{phone}</br>
+        <b>Addr: </b>{street_addr}, {city}, {county}, {zip} </br>
+        <b><a href='{prescreening_site}' target='_blank'>Prescreening</a></b></br>
+        ",
+          name = .data$Place_Name,
+          type = .data$Vaccine_Type,
+          phone = .data$Phone,
+          website = .data$Website,
+          prescreening_site = .data$Prescreening_Website,
+          street_addr = .data$Address,
+          city = .data$City,
+          county = .data$County,
+          zip = .data$Zip
+        )
+      )
+  }
 }
 
 # ===================================== #

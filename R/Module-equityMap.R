@@ -450,7 +450,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
 
     # > Point Level
-    vax_provider <- get_vax_provider()
+    vax_provider <- get_vax_provider(parquet = TRUE)
     vax_provider_reactive <- shiny::reactiveValues(
       filtered = NULL
     )
