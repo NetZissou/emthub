@@ -762,10 +762,32 @@ get_sf_zip <- function(parquet = F) {
       fs::path(
         emthub::ROOT,
         "Shapefile",
-        "tl_2018_us_zcta510_for_Mahoning_County.geojson"
+        "tl_2020_us_zcta520_clip_to_oh.geojsonn"
       ),
       quiet=TRUE
     )
   }
+}
+
+
+get_sf_zip_by_county <- function(county_name) {
+
+  if (!all(stringr::str_detect(county_name, "County"))) {
+    county_name <- stringr::str_to_title(paste0(county_name, " County"))
+  }
+
+  purrr::map_df(
+    .x = county_name,
+    .f = ~sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_zip_by_county",
+        glue::glue(
+          "sf_zip_{county}.parquet", county = .x
+        )
+      )
+    )
+  )
 }
 
