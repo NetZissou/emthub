@@ -42,8 +42,8 @@ server <- function(input, output, session) {
     list(
       SF_HUB = get_sf_hub(parquet = T),
       SF_CT = get_sf_ct(parquet = T),
-      SF_COUNTY = get_sf_county(parquet = T),
-      SF_ZIP = get_sf_zip(parquet = T)
+      SF_COUNTY = get_sf_county(parquet = T)
+      #SF_ZIP = get_sf_zip(parquet = T)
     )
 
 

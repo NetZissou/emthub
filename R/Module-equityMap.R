@@ -1383,8 +1383,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%
 
-      # ========================= #
-      # ---- COVID Case Rate ----
+        # ========================= #
+        # ---- COVID Case Rate ----
       # ========================= #
       leaflet::addPolygons(
         data = covid_data,
@@ -1525,6 +1525,13 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         leaflet::hideGroup(
           c(
             "Hub Service Area"
+          )
+        ) %>%
+        leaflet.extras2::addEasyprint(
+          options = leaflet.extras2::easyprintOptions(
+            title = 'Print Map',
+            position = 'bottomleft',
+            exportOnly = TRUE
           )
         )
 
