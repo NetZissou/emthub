@@ -951,7 +951,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
             position = 'bottomleft',
             exportOnly = TRUE
           )
-        )
+        ) %>%
         leaflet.extras2::stopSpinner()
 
     })
