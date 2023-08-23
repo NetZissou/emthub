@@ -86,23 +86,23 @@ pull_iso_resource <- function(
   # ---- Find Covered Resource ----
   # =============================== #
 
-  resource_filtered <-
+  resource_filtered_tbl <-
     resource_tbl %>%
     dplyr::filter(.data[[resource_tbl_key]] %in% overlap_object) %>%
-    dplyr::collect() %>%
-    sf::st_as_sf(
-      coords = resource_tbl_coords
-    ) %>%
-    sf::st_set_crs(value = 4326)
+    dplyr::collect()
 
 
   resource_index <-
     sf::st_contains(
       iso_sf,
-      resource_filtered
+      sf::st_as_sf(
+        resource_filtered_tbl,
+        coords = resource_tbl_coords
+      ) %>%
+        sf::st_set_crs(value = 4326)
     ) %>% unlist()
 
-  return(resource_filtered[resource_index, ])
+  return(resource_filtered_tbl[resource_index, ])
 }
 
 addISO <- function(
@@ -232,7 +232,9 @@ addISO <- function(
         resource_tbl = resource_params$resource_tbl,
         resource_tbl_key = resource_params$resource_tbl_key,
         resource_tbl_coords = resource_params$resource_tbl_coords
-      ) %>% dplyr::distinct(.data$provider_location_guid, .data$popup)
+      ) %>%
+      dplyr::group_by(.data$provider_location_guid) %>%
+      dplyr::slice(1)
 
     leaflet::leafletProxy(map_id) %>%
       leaflet.extras2::addSpinner() %>%
@@ -297,27 +299,27 @@ addISO <- function(
       # ====================== #
       # ---- Add Resource ----
     # ====================== #
-    # leaflet::addAwesomeMarkers(
-    #   data = iso_resource_vax_provider,
-    #   group = "ISO Resource - Vaccine Providers",
-    #   #lng = ~longitude, lat = ~latitude,
-    #   icon = leaflet::makeAwesomeIcon(
-    #     text = fontawesome::fa("house-medical"),
-    #     iconColor = 'black',
-    #     markerColor = "blue"
-    #   ),
-    #   popup = ~popup,
-    #   clusterOptions = leaflet::markerClusterOptions(),
-    #   clusterId = "vaxCluster",
-    #   labelOptions = leaflet::labelOptions(
-    #     style = list(
-    #       "font-size" = "15px",
-    #       "font-style" = "bold",
-    #       "border-color" = "rgba(0,0,0,0.5)"
-    #     )
-    #   ),
-    #   options = leaflet::pathOptions(pane = "layer_top")
-    # ) %>%
+    leaflet::addAwesomeMarkers(
+      data = iso_resource_vax_provider,
+      group = "ISO Resource - Vaccine Providers",
+      lng = ~longitude, lat = ~latitude,
+      icon = leaflet::makeAwesomeIcon(
+        text = fontawesome::fa("house-medical"),
+        iconColor = 'black',
+        markerColor = "blue"
+      ),
+      popup = ~popup,
+      clusterOptions = leaflet::markerClusterOptions(),
+      clusterId = "vaxCluster",
+      labelOptions = leaflet::labelOptions(
+        style = list(
+          "font-size" = "15px",
+          "font-style" = "bold",
+          "border-color" = "rgba(0,0,0,0.5)"
+        )
+      ),
+      options = leaflet::pathOptions(pane = "layer_top")
+    ) %>%
       leaflet.extras2::stopSpinner()
 
     shiny::showNotification("Isochron Generated!", type = "message")
