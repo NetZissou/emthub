@@ -234,6 +234,11 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         )
     })
 
+    sf_zip <- shiny::reactive({
+      shiny::req(!rlang::is_empty(input$global_county))
+      get_sf_zip_by_county(input$global_county)
+    })
+
     # > Shapefiles
     #SF_ZIP <- get_sf_zip()
     #SF_CT <- get_sf_ct()
@@ -632,6 +637,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     })
 
 
+
     # ============= #
     # ---- Map ----
     # ============= #
@@ -790,7 +796,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         # > Overlay: Zip ----
 
       leaflet::addPolygons(
-        data = shapefile_list$SF_ZIP,
+        data = sf_zip(),
         group = "Zip Code",
         stroke = TRUE,
         color = "#555555",
@@ -801,7 +807,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
         label = ~ paste0(
-          "<b>", GEOID10, "</b>"
+          "<b>", GEOID20, "</b>"
         ) %>% lapply(htmltools::HTML),
 
         labelOptions = leaflet::labelOptions(
@@ -937,6 +943,13 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
             "Low income & Low food access (1-10 miles)",
             "Low income & Low food access (half-10 miles)",
             "Low income & Low food access (1-20 miles)"
+          )
+        ) %>%
+        leaflet.extras2::addEasyprint(
+          options = leaflet.extras2::easyprintOptions(
+            title = 'Print Map',
+            position = 'bottomleft',
+            exportOnly = TRUE
           )
         ) %>%
         leaflet.extras2::stopSpinner()

@@ -249,62 +249,10 @@ equityMapUI <- function(id) {
           )
 
         ),
-
-        # bslib::layout_columns(
-        #   col_widths = c(6,6),
-        #   #row_heights = c(1,1,1,1,1,1,3),
-        #   shiny::selectInput(
-        #     shiny::NS(id, "selection_vax_provider_type"),
-        #     label = "Type",
-        #     choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_type,
-        #     multiple = TRUE
-        #   ),
-        #
-        #   shiny::selectInput(
-        #     shiny::NS(id, "selection_vax_provider_hub"),
-        #     label = "Hub",
-        #     choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
-        #     multiple = TRUE
-        #   )
-        # ),
-
-        # shiny::selectInput(
-        #   shiny::NS(id, "selection_vax_ct"),
-        #   label = "Census Tract",
-        #   choices = emthub::EQUITY_MAP_FILTER_CHOICES$ct,
-        #   multiple = TRUE
-        # ),
-        #
-        # shiny::selectInput(
-        #   shiny::NS(id, "selection_vax_city"),
-        #   label = "City",
-        #   choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_city,
-        #   multiple = TRUE
-        # ),
-        #
-        # shiny::selectInput(
-        #   shiny::NS(id, "selection_vax_zip"),
-        #   label = "Zip Code",
-        #   choices = emthub::EQUITY_MAP_FILTER_CHOICES$zip,
-        #   multiple = TRUE
-        # ),
-        #
-        # shiny::selectInput(
-        #   shiny::NS(id, "selection_vax_county"),
-        #   label = "County",
-        #   choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
-        #   multiple = TRUE
-        # ),
-
-
-        # shiny::actionButton(
-        #   shiny::NS(id, "update_vax_provider_tbl"),
-        #   label = "Find Provider"
-        # ),
         reactable_searchBar(shiny::NS(id, "vax_provider_table"), placeholder = "Search for providers ..."),
         reactable_csvDownloadButton(shiny::NS(id, "vax_provider_table"), filename = "vaccine_provider.csv"),
         shiny::helpText("Toggle to add places to the map"),
-        reactable::reactableOutput(shiny::NS(id, "vax_provider_table"))
+        reactable::reactableOutput(shiny::NS(id, "vax_provider_table"), height = "1200px")
       ),
 
 
@@ -340,7 +288,6 @@ equityMapUI <- function(id) {
 
       bslib::nav_panel(
         title = "ISO",
-
         shiny::fluidRow(
           shiny::column(
             width = 12,
@@ -350,6 +297,12 @@ equityMapUI <- function(id) {
               placeholder = "street, city, state, zip",
               width = "100%"
             ),
+            shiny::textInput(
+              shiny::NS(id, "iso_label"),
+              label = "Label",
+              placeholder = "Label the isochrone, not required",
+              width = "100%"
+            )
           )
         ),
         shiny::fluidRow(
@@ -401,56 +354,26 @@ equityMapUI <- function(id) {
           )
         ),
 
-        shiny::actionButton(
-          shiny::NS(id, "iso_add"),
-          label = "Add Isochrones"
+        shiny::fluidRow(
+          shiny::column(
+            width = 6,
+            shiny::actionButton(
+              shiny::NS(id, "iso_add"),
+              label = "Add Isochrones",
+              width = "100%"
+            )
+          ),
+
+          shiny::column(
+            width = 6,
+            shiny::actionButton(
+              shiny::NS(id, "iso_clear"),
+              label = "Clear Isochrones",
+              width = "100%"
+            )
+          )
         )
 
-        # bslib::layout_columns(
-        #   col_widths = c(12,6,6,12,6,6,6,6),
-        #   shiny::textInput(
-        #     shiny::NS(id, "iso_location"),
-        #     label = "Full Address",
-        #     placeholder = "street, city, state, zip"
-        #   ),
-        #
-        #   shiny::numericInput(
-        #     shiny::NS(id, "iso_lat"),
-        #     label = "Latitude ",
-        #     value = NULL
-        #   ),
-        #   shiny::numericInput(
-        #     shiny::NS(id, "iso_lng"),
-        #     label = "Longitude ",
-        #     value = NULL
-        #   ),
-        #   shiny::helpText("Click location on the map to obtain lat, lng. Leave empty if full address is provided."),
-        #
-        #   shiny::selectInput(
-        #     shiny::NS(id, "iso_range_type"),
-        #     label = "Measurement",
-        #     choices = c("distance", "time"),
-        #     multiple = FALSE
-        #   ),
-        #
-        #   shiny::numericInput(
-        #     shiny::NS(id, "iso_range"),
-        #     label = "Range (min/km)",
-        #     value = 5
-        #   ),
-        #
-        #   shiny::selectInput(
-        #     shiny::NS(id, "iso_type"),
-        #     label = "Transportation Type",
-        #     choices = c("car", "walk", "cycle"),
-        #     multiple = FALSE
-        #   ),
-        #
-        #   shiny::actionButton(
-        #     shiny::NS(id, "iso_add"),
-        #     label = "Add Isochrones"
-        #   )
-        # )
       )
     )
 
@@ -1140,7 +1063,14 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         location = c(input$iso_lng, input$iso_lat),
         range = range,
         range_type = input$iso_range_type,
-        type = input$iso_type
+        type = input$iso_type,
+        resource_params = list(
+          index_sf = shapefile_list$SF_CT,
+          index_sf_key = "GEOID",
+          resource_tbl = vax_provider,
+          resource_tbl_key = "Census_Tract",
+          resource_tbl_coords = c("longitude", "latitude")
+        )
       )
     })
 
@@ -1159,6 +1089,17 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         inputId = "iso_lng",
         value = click$lng
       )
+    })
+
+    shiny::observeEvent(input$iso_clear, {
+
+      leaflet::leafletProxy("equity_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+        leaflet::clearGroup("Isochron") %>%
+        leaflet::clearGroup("ISO Resource - Vaccine Providers") %>%
+        leaflet::clearGroup("ISO Resource - POI") %>%
+        leaflet.extras2::stopSpinner()
     })
 
     shiny::observe({
@@ -1227,7 +1168,14 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
         selected_vax_provider$value <-
           vax_provider_reactive$filtered[selected_vax_provider_index(),] %>%
-          dplyr::collect()
+          dplyr::select(
+            .data$provider_location_guid,
+            .data$latitude,
+            .data$longitude,
+            .data$popup
+          ) %>%
+          dplyr::collect() %>%
+          dplyr::distinct()
 
 
       } else {
@@ -1341,6 +1289,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             ),
             popup = ~popup,
             clusterOptions = leaflet::markerClusterOptions(),
+            clusterId = "vaxCluster",
             labelOptions = leaflet::labelOptions(
               style = list(
                 "font-size" = "15px",
@@ -1383,8 +1332,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%
 
-      # ========================= #
-      # ---- COVID Case Rate ----
+        # ========================= #
+        # ---- COVID Case Rate ----
       # ========================= #
       leaflet::addPolygons(
         data = covid_data,
@@ -1518,13 +1467,51 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             "Hub Service Area",
             "Vaccine Providers",
             "Point of Interest",
-            "Isochron"
+            "Isochron",
+            "ISO Resource - Vaccine Providers",
+            "ISO Resource - POI"
           ),
           position = "topleft"
         ) %>%
         leaflet::hideGroup(
           c(
             "Hub Service Area"
+          )
+        ) %>%
+        # leaflet::addEasyButton(leaflet::easyButton(
+        #   position = "bottomleft",
+        #   states = list(
+        #     leaflet::easyButtonState(
+        #       stateName="unfrozen-markers",
+        #       icon="ion-toggle",
+        #       title="Freeze Clusters",
+        #       onClick = leaflet::JS("
+        #   function(btn, map) {
+        #     var clusterManager =
+        #       map.layerManager.getLayer('cluster', 'vaxCluster');
+        #     clusterManager.freezeAtZoom();
+        #     btn.state('frozen-markers');
+        #   }")
+        #     ),
+        #     leaflet::easyButtonState(
+        #       stateName="frozen-markers",
+        #       icon="ion-toggle-filled",
+        #       title="UnFreeze Clusters",
+        #       onClick = leaflet::JS("
+        #   function(btn, map) {
+        #     var clusterManager =
+        #       map.layerManager.getLayer('cluster', 'vaxCluster');
+        #     clusterManager.unfreeze();
+        #     btn.state('unfrozen-markers');
+        #   }")
+        #     )
+        #   )
+        # )) %>%
+        leaflet.extras2::addEasyprint(
+          options = leaflet.extras2::easyprintOptions(
+            title = 'Print Map',
+            position = 'bottomleft',
+            exportOnly = TRUE
           )
         )
 

@@ -138,30 +138,30 @@ get_point_of_interest <- function(parquet = FALSE) {
     )
   }
 
-    # dplyr::mutate(
-    #   popup = glue::glue(
-    #     "
-    #   <h6>{name}</h6></hr>
-    #   <b>Type: </b>{type}</br>
-    #   <b>Hub: </b>{hub}</br>
-    #   <b>Addr: </b>{street_addr}, {city}, {county}, {zip}
-    #   ",
-    #     name = .data$Company,
-    #     type = .data$Type,
-    #     street_addr = .data$`Address Line 1`,
-    #     city = .data$City,
-    #     county = .data$county,
-    #     zip = .data$Zipcode,
-    #     hub = .data$hub
-    #   )
-    # ) %>%
-    # readr::write_csv(
-    #   fs::path(
-    #     emthub::ROOT,
-    #     "Places",
-    #     "poi_for_ohio.csv"
-    #   )
-    # )
+  # dplyr::mutate(
+  #   popup = glue::glue(
+  #     "
+  #   <h6>{name}</h6></hr>
+  #   <b>Type: </b>{type}</br>
+  #   <b>Hub: </b>{hub}</br>
+  #   <b>Addr: </b>{street_addr}, {city}, {county}, {zip}
+  #   ",
+  #     name = .data$Company,
+  #     type = .data$Type,
+  #     street_addr = .data$`Address Line 1`,
+  #     city = .data$City,
+  #     county = .data$county,
+  #     zip = .data$Zipcode,
+  #     hub = .data$hub
+  #   )
+  # ) %>%
+  # readr::write_csv(
+  #   fs::path(
+  #     emthub::ROOT,
+  #     "Places",
+  #     "poi_for_ohio.csv"
+  #   )
+  # )
 }
 
 
@@ -259,14 +259,57 @@ get_pct_household_limited_english <- function() {
 # =============================== #
 
 update_vax_provider <- function() {
-  readr::read_csv(
-    fs::path(
-      emthub::ROOT,
-      "Vaccine",
-      "cdc_vax_providers.csv"
-    ),
-    lazy = TRUE
-  ) %>%
+
+  vax_provider <-
+    readr::read_csv(
+      fs::path(
+        emthub::ROOT,
+        "Vaccine",
+        "cdc_vax_providers.csv"
+      ),
+      lazy = TRUE
+    )
+
+  vax_provider_type <-
+    vax_provider %>%
+    dplyr::collect() %>%
+    tidyr::pivot_wider(
+      names_from  = .data$Vaccine_Type,
+      values_from = .data$Vaccine_Type
+    ) %>%
+    dplyr::transmute(
+      .data$provider_location_guid,
+      vax_type_full = purrr::pmap_chr(
+        .l = list(
+          .data$`COVID-19 Bivalent Booster (Pfizer-BioNTech)- Age 12+ years`,
+          .data$`COVID-19 Bivalent Booster (Pfizer-BioNTech)- Age 5 to 11 years`,
+          .data$`COVID-19 Bivalent Booster Provider (Moderna) - Age 18+`
+        ),
+        .f = function(type_1, type_2, type_3) {
+          types <- c(type_1, type_2, type_3)
+          types <- types[!is.na(types)]
+
+          stringr::str_c(types, collapse = "; ")
+        }
+      )
+    )
+
+  sf_county_hub <-
+    get_sf_county(T) %>%
+    dplyr::as_tibble() %>%
+    dplyr::select(County = .data$COUNTY, Hub = .data$HUB_Name)
+
+
+
+  vax_provider %>%
+    dplyr::left_join(
+      vax_provider_type,
+      by = "provider_location_guid"
+    ) %>%
+    dplyr::left_join(
+      sf_county_hub,
+      by = "County"
+    ) %>%
     dplyr::mutate(
       Census_Tract = as.character(.data$Census_Tract),
       popup = glue::glue(
@@ -275,19 +318,22 @@ update_vax_provider <- function() {
         <b>Type: </b>{type}</br>
         <b>Phone: </b>{phone}</br>
         <b>Addr: </b>{street_addr}, {city}, {county}, {zip} </br>
+        <b>Hub: </b>{hub}</br>
         <b><a href='{prescreening_site}' target='_blank'>Prescreening</a></b></br>
         ",
         name = .data$Place_Name,
-        type = .data$Vaccine_Type,
+        type = .data$vax_type_full,
         phone = .data$Phone,
         website = .data$Website,
         prescreening_site = .data$Prescreening_Website,
         street_addr = .data$Address,
         city = .data$City,
         county = .data$County,
-        zip = .data$Zip
+        zip = .data$Zip,
+        hub = .data$Hub
       )
     ) %>%
+    dplyr::select(-.data$vax_type_full) %>%
     arrow::write_parquet(
       fs::path(
         emthub::ROOT,
@@ -310,6 +356,7 @@ get_vax_provider <- function(parquet = F) {
       as_data_frame = FALSE
     )
   } else {
+
     readr::read_csv(
       fs::path(
         emthub::ROOT,
@@ -317,29 +364,37 @@ get_vax_provider <- function(parquet = F) {
         "cdc_vax_providers.csv"
       ),
       lazy = TRUE
-    ) %>%
-      dplyr::mutate(
-        Census_Tract = as.character(.data$Census_Tract),
-        popup = glue::glue(
-          "
-        <h6><a href='{website}' target='_blank'>{name}</a></h6></hr>
-        <b>Type: </b>{type}</br>
-        <b>Phone: </b>{phone}</br>
-        <b>Addr: </b>{street_addr}, {city}, {county}, {zip} </br>
-        <b><a href='{prescreening_site}' target='_blank'>Prescreening</a></b></br>
-        ",
-          name = .data$Place_Name,
-          type = .data$Vaccine_Type,
-          phone = .data$Phone,
-          website = .data$Website,
-          prescreening_site = .data$Prescreening_Website,
-          street_addr = .data$Address,
-          city = .data$City,
-          county = .data$County,
-          zip = .data$Zip
-        )
-      )
+    )
+
+    # vax_provider %>%
+    #   dplyr::mutate(
+    #     Census_Tract = as.character(.data$Census_Tract),
+    #     popup = glue::glue(
+    #       "
+    #     <h6><a href='{website}' target='_blank'>{name}</a></h6></hr>
+    #     <b>Type: </b>{type}</br>
+    #     <b>Phone: </b>{phone}</br>
+    #     <b>Addr: </b>{street_addr}, {city}, {county}, {zip} </br>
+    #     <b><a href='{prescreening_site}' target='_blank'>Prescreening</a></b></br>
+    #     ",
+    #       name = .data$Place_Name,
+    #       type = .data$Vaccine_Type,
+    #       phone = .data$Phone,
+    #       website = .data$Website,
+    #       prescreening_site = .data$Prescreening_Website,
+    #       street_addr = .data$Address,
+    #       city = .data$City,
+    #       county = .data$County,
+    #       zip = .data$Zip
+    #     )
+    #   )
   }
+}
+
+reshape_vax_provider <- function() {
+
+
+
 }
 
 # ===================================== #
@@ -613,19 +668,19 @@ update_ct_level_data <- function() {
       by = "GEOID"
     )
 
-    sf::st_write(
-      ct_level_data,
-      ct_level_data_path
-    )
+  sf::st_write(
+    ct_level_data,
+    ct_level_data_path
+  )
 
-    sfarrow::st_write_parquet(
-      ct_level_data,
-      fs::path(
-        emthub::ROOT,
-        "Demographic",
-        "emt_oh_ctracts_dataset.parquet"
-      )
+  sfarrow::st_write_parquet(
+    ct_level_data,
+    fs::path(
+      emthub::ROOT,
+      "Demographic",
+      "emt_oh_ctracts_dataset.parquet"
     )
+  )
 
 }
 
@@ -762,10 +817,32 @@ get_sf_zip <- function(parquet = F) {
       fs::path(
         emthub::ROOT,
         "Shapefile",
-        "tl_2018_us_zcta510_for_Mahoning_County.geojson"
+        "tl_2020_us_zcta520_clip_to_oh.geojsonn"
       ),
       quiet=TRUE
     )
   }
+}
+
+
+get_sf_zip_by_county <- function(county_name) {
+
+  if (!all(stringr::str_detect(county_name, "County"))) {
+    county_name <- stringr::str_to_title(paste0(county_name, " County"))
+  }
+
+  purrr::map_df(
+    .x = county_name,
+    .f = ~sfarrow::st_read_parquet(
+      fs::path(
+        emthub::ROOT,
+        "Shapefile",
+        "sf_zip_by_county",
+        glue::glue(
+          "sf_zip_{county}.parquet", county = .x
+        )
+      )
+    )
+  )
 }
 

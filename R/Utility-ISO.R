@@ -53,12 +53,57 @@ get_iso <- function(
       range = range,
       range_type = range_type,
       type = type,
-      geojson = httr2::resp_body_json(resp)$features
+      sf = sf::read_sf(httr2::resp_body_string(resp))
+      #geojson = httr2::resp_body_json(resp)$features
     )
   )
 }
 
 
+pull_iso_resource <- function(
+  iso_sf,
+  index_sf = get_sf_ct(parquet = TRUE),
+  index_sf_key = "GEOID",
+  resource_tbl,
+  resource_tbl_key = "Census_Tract",
+  resource_tbl_coords = c("longitude", "latitude")
+) {
+
+  # ================================================ #
+  # ---- Find Overlap (Census Tract by Default) ----
+  # ================================================ #
+
+  overlap_index <-
+    sf::st_intersects(
+      iso_sf,
+      index_sf
+    ) %>% unlist()
+
+  overlap_object <-
+    index_sf[overlap_index, ][[index_sf_key]]
+
+  # =============================== #
+  # ---- Find Covered Resource ----
+  # =============================== #
+
+  resource_filtered <-
+    resource_tbl %>%
+    dplyr::filter(.data[[resource_tbl_key]] %in% overlap_object) %>%
+    dplyr::collect() %>%
+    sf::st_as_sf(
+      coords = resource_tbl_coords
+    ) %>%
+    sf::st_set_crs(value = 4326)
+
+
+  resource_index <-
+    sf::st_contains(
+      iso_sf,
+      resource_filtered
+    ) %>% unlist()
+
+  return(resource_filtered[resource_index, ])
+}
 
 addISO <- function(
   map_id,
@@ -66,7 +111,8 @@ addISO <- function(
   location = c(),
   range = c(),
   range_type = c("distance", "time"),
-  type = c("car", "walk", "cycle")
+  type = c("car", "walk", "cycle"),
+  resource_params = NULL
 ) {
 
   # ================= #
@@ -109,6 +155,16 @@ addISO <- function(
       type = type
     )
 
+  iso_resource_vax_provider <-
+    pull_iso_resource(
+      iso_sf = iso_result$sf,
+      index_sf = resource_params$index_sf,
+      index_sf_key = resource_params$index_sf_key,
+      resource_tbl = resource_params$resource_tbl,
+      resource_tbl_key = resource_params$resource_tbl_key,
+      resource_tbl_coords = resource_params$resource_tbl_coords
+    ) %>% dplyr::distinct(.data$provider_location_guid, .data$popup)
+
   shiny::showNotification("Isochron Generated!", type = "message")
 
   # =========================== #
@@ -141,16 +197,16 @@ addISO <- function(
   get_center_icon <- function(type) {
 
     icon <- switch(
-        type,
-        "car"= "car",
-        "walk"= "walking",
-        "cycle"= "bicycle"
-      )
+      type,
+      "car"= "car",
+      "walk"= "walking",
+      "cycle"= "bicycle"
+    )
 
     leaflet::makeAwesomeIcon(
       text = fontawesome::fa(icon),
       iconColor = 'black',
-      markerColor = "blue"
+      markerColor = "purple"
     )
   }
 
@@ -163,13 +219,10 @@ addISO <- function(
   leaflet::leafletProxy(map_id) %>%
     leaflet.extras2::addSpinner() %>%
     leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
-    # leaflet::addGeoJSON(
-    #   data = iso_result$geojson,
-    #   stroke = TRUE,
-    #   group = "Isochron",
-    #   popup = popup_label,
-    #   options = leaflet::pathOptions(pane = "layer_top")
-    # ) %>%
+
+    # ==================== #
+    # ---- Add Center ----
+  # ===================== #
     leaflet::addAwesomeMarkers(
       lat = location[2],
       lng = location[1],
@@ -185,14 +238,32 @@ addISO <- function(
       ),
       icon = center_icon
     ) %>%
-    leaflet.extras::addGeoJSONv2(
-      geojson = iso_result$geojson,
+
+    # ================= #
+    # ---- Add ISO ----
+  # ================== #
+    leaflet::addPolygons(
+      data = iso_result$sf,
       group = "Isochron",
-      #popupProperty = "type",
+      stroke = TRUE,
       color = "blue",
+      weight = 2,
       opacity = 0.8,
-      weight = 5,
+      dashArray = "1",
       fillOpacity = 0.2,
+      #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+
+      label = htmltools::HTML(popup_label),
+
+      labelOptions = leaflet::labelOptions(
+        style = list(
+          "font-weight" = "normal",
+          padding = "3px 8px"
+        ),
+        textsize = "15px",
+        direction = "auto"
+      ),
+
       highlight = leaflet::highlightOptions(
         weight = 3,
         fillOpacity = 0.1,
@@ -202,8 +273,33 @@ addISO <- function(
         bringToFront = TRUE,
         sendToBack = TRUE
       ),
-      pathOptions = leaflet::pathOptions(pane = "layer_top")
+      options = leaflet::pathOptions(pane = "layer_bottom")
     ) %>%
-    leaflet.extras2::stopSpinner()
+
+    # ====================== #
+    # ---- Add Resource ----
+   # ====================== #
+  leaflet::addAwesomeMarkers(
+    data = iso_resource_vax_provider,
+    group = "ISO Resource - Vaccine Providers",
+    #lng = ~longitude, lat = ~latitude,
+    icon = leaflet::makeAwesomeIcon(
+      text = fontawesome::fa("house-medical"),
+      iconColor = 'black',
+      markerColor = "blue"
+    ),
+    popup = ~popup,
+    clusterOptions = leaflet::markerClusterOptions(),
+    clusterId = "vaxCluster",
+    labelOptions = leaflet::labelOptions(
+      style = list(
+        "font-size" = "15px",
+        "font-style" = "bold",
+        "border-color" = "rgba(0,0,0,0.5)"
+      )
+    ),
+    options = leaflet::pathOptions(pane = "layer_top")
+  ) %>%
+  leaflet.extras2::stopSpinner()
 
 }
