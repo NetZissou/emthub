@@ -222,7 +222,7 @@ addISO <- function(
   # ---- Add to Map ----
   # ==================== #
 
-  if (!rlang::is_empty(iso_result$sf) && nrow(iso_result$sf) > 0) {
+  tryCatch({
 
     iso_resource_vax_provider <-
       pull_iso_resource(
@@ -297,34 +297,37 @@ addISO <- function(
       # ====================== #
       # ---- Add Resource ----
     # ====================== #
-    leaflet::addAwesomeMarkers(
-      data = iso_resource_vax_provider,
-      group = "ISO Resource - Vaccine Providers",
-      #lng = ~longitude, lat = ~latitude,
-      icon = leaflet::makeAwesomeIcon(
-        text = fontawesome::fa("house-medical"),
-        iconColor = 'black',
-        markerColor = "blue"
-      ),
-      popup = ~popup,
-      clusterOptions = leaflet::markerClusterOptions(),
-      clusterId = "vaxCluster",
-      labelOptions = leaflet::labelOptions(
-        style = list(
-          "font-size" = "15px",
-          "font-style" = "bold",
-          "border-color" = "rgba(0,0,0,0.5)"
-        )
-      ),
-      options = leaflet::pathOptions(pane = "layer_top")
-    ) %>%
+    # leaflet::addAwesomeMarkers(
+    #   data = iso_resource_vax_provider,
+    #   group = "ISO Resource - Vaccine Providers",
+    #   #lng = ~longitude, lat = ~latitude,
+    #   icon = leaflet::makeAwesomeIcon(
+    #     text = fontawesome::fa("house-medical"),
+    #     iconColor = 'black',
+    #     markerColor = "blue"
+    #   ),
+    #   popup = ~popup,
+    #   clusterOptions = leaflet::markerClusterOptions(),
+    #   clusterId = "vaxCluster",
+    #   labelOptions = leaflet::labelOptions(
+    #     style = list(
+    #       "font-size" = "15px",
+    #       "font-style" = "bold",
+    #       "border-color" = "rgba(0,0,0,0.5)"
+    #     )
+    #   ),
+    #   options = leaflet::pathOptions(pane = "layer_top")
+    # ) %>%
       leaflet.extras2::stopSpinner()
 
     shiny::showNotification("Isochron Generated!", type = "message")
-  } else {
-    shiny::showNotification("Failed to generate Isochron. Please try later.", type = "message")
+  }, error = function(e) {
+    shiny::showNotification("Failed to generate Isochron. Please try later.", type = "error")
     print(iso_result)
     print(iso_result$sf)
-  }
+    print(iso_resource_vax_provider)
+    print(e)
+  })
+
 
 }
