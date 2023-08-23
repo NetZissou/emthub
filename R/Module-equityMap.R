@@ -389,11 +389,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     # ---- Data ----
     # ============== #
 
-    # > Shapefiles
-    #SF_HUB <- get_sf_hub()
-    #SF_COUNTY <- get_sf_county()
-
-
     # > Point Level
     vax_provider <- get_vax_provider(parquet = TRUE)
     vax_provider_reactive <- shiny::reactiveValues(
@@ -407,20 +402,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     # > Regional Rate
     # > County Level
     covid_data <- get_covid_data_county(parquet = TRUE)
-
-    # > Census Tract Level
-    # NOTE: USE ct_level_data
-
-    # svi_data <- get_SVI()
-    # household_english_data <- get_pct_household_limited_english()
-    # vax_provider_travel_time_by_car <-
-    #   get_vax_provider_travel_time_by_car()
-    # vax_provider_travel_time_by_transit <-
-    #   get_vax_provider_travel_time_by_transit()
-
-
-
-
 
     # > Pal
     # pal_sf_hub <-
@@ -508,6 +489,16 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       update_vax_provider_travel_time_by_transit(input$selection_nearest_vax_by_transit)
 
 
+      leaflet::leafletProxy("equity_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+        leaflet::clearGroup("Vaccine Providers") %>%
+        leaflet::clearGroup("Point of Interest") %>%
+        leaflet::clearGroup("Isochron") %>%
+        leaflet::clearGroup("ISO Resource - Vaccine Providers") %>%
+        leaflet::clearGroup("ISO Resource - POI") %>%
+        leaflet.extras2::stopSpinner()
+
       #shiny::showNotification("Completed", type = "message")
     })
 
@@ -528,42 +519,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             .data$Vaccine_Type %in% type
           )
       }
-
-      # if (!rlang::is_empty(ct)) {
-      #
-      #   filtered <-
-      #     filtered %>%
-      #     dplyr::filter(
-      #       .data$Census_Tract %in% ct
-      #     )
-      # }
-      #
-      # if (!rlang::is_empty(city)) {
-      #
-      #   filtered <-
-      #     filtered %>%
-      #     dplyr::filter(
-      #       .data$City %in% city
-      #     )
-      # }
-      #
-      # if (!rlang::is_empty(zip)) {
-      #
-      #   filtered <-
-      #     filtered %>%
-      #     dplyr::filter(
-      #       .data$Zip %in% zip
-      #     )
-      # }
-      #
-      # if (!rlang::is_empty(county)) {
-      #
-      #   filtered <-
-      #     filtered %>%
-      #     dplyr::filter(
-      #       .data$County %in% county
-      #     )
-      # }
 
       if (!rlang::is_empty(hubs)) {
 
@@ -1070,7 +1025,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           resource_tbl = vax_provider,
           resource_tbl_key = "Census_Tract",
           resource_tbl_coords = c("longitude", "latitude")
-        )
+        ),
+        label = input$iso_label
       )
     })
 
@@ -1105,10 +1061,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     shiny::observe({
       update_vax_provider(
         input$selection_vax_provider_type,
-        # input$selection_vax_ct,
-        # input$selection_vax_city,
-        # input$selection_vax_zip,
-        # input$selection_vax_county,
         input$selection_vax_provider_hub
       )
     })
