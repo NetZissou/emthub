@@ -86,23 +86,23 @@ pull_iso_resource <- function(
   # ---- Find Covered Resource ----
   # =============================== #
 
-  resource_filtered <-
+  resource_filtered_tbl <-
     resource_tbl %>%
     dplyr::filter(.data[[resource_tbl_key]] %in% overlap_object) %>%
-    dplyr::collect() %>%
-    sf::st_as_sf(
-      coords = resource_tbl_coords
-    ) %>%
-    sf::st_set_crs(value = 4326)
+    dplyr::collect()
 
 
   resource_index <-
     sf::st_contains(
       iso_sf,
-      resource_filtered
+      sf::st_as_sf(
+        resource_filtered_tbl,
+        coords = resource_tbl_coords
+      ) %>%
+        sf::st_set_crs(value = 4326)
     ) %>% unlist()
 
-  return(resource_filtered[resource_index, ])
+  return(resource_filtered_tbl[resource_index, ])
 }
 
 addISO <- function(
@@ -112,7 +112,8 @@ addISO <- function(
   range = c(),
   range_type = c("distance", "time"),
   type = c("car", "walk", "cycle"),
-  resource_params = NULL
+  resource_params = NULL,
+  label = NULL
 ) {
 
   # ================= #
@@ -155,18 +156,6 @@ addISO <- function(
       type = type
     )
 
-  iso_resource_vax_provider <-
-    pull_iso_resource(
-      iso_sf = iso_result$sf,
-      index_sf = resource_params$index_sf,
-      index_sf_key = resource_params$index_sf_key,
-      resource_tbl = resource_params$resource_tbl,
-      resource_tbl_key = resource_params$resource_tbl_key,
-      resource_tbl_coords = resource_params$resource_tbl_coords
-    ) %>% dplyr::distinct(.data$provider_location_guid, .data$popup)
-
-  shiny::showNotification("Isochron Generated!", type = "message")
-
   # =========================== #
   # ---- Meta Data for Map ----
   # =========================== #
@@ -181,18 +170,35 @@ addISO <- function(
     range_type_label <- "Mins"
   }
 
-  popup_label <-
-    glue::glue(
-      "
+  if (rlang::is_empty(label)) {
+    popup_label <-
+      glue::glue(
+        "
     <b>{addr}</b></br>
     <b>Range: </b>{range} {range_type}</br>
     <b>Type: </b> {type}
     ",
-      addr = full_address,
-      range = range_label,
-      range_type = range_type_label,
-      type = type
-    )
+        addr = full_address,
+        range = range_label,
+        range_type = range_type_label,
+        type = type
+      )
+  } else {
+    popup_label <-
+      glue::glue(
+        "
+    <b>{label}</b></br>
+    <b>{addr}</b></br>
+    <b>Range: </b>{range} {range_type}</br>
+    <b>Type: </b> {type}
+    ",
+        label = label,
+        addr = full_address,
+        range = range_label,
+        range_type = range_type_label,
+        type = type
+      )
+  }
 
   get_center_icon <- function(type) {
 
@@ -216,13 +222,27 @@ addISO <- function(
   # ---- Add to Map ----
   # ==================== #
 
-  leaflet::leafletProxy(map_id) %>%
-    leaflet.extras2::addSpinner() %>%
-    leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+  tryCatch({
 
-    # ==================== #
-    # ---- Add Center ----
-  # ===================== #
+    iso_resource_vax_provider <-
+      pull_iso_resource(
+        iso_sf = iso_result$sf,
+        index_sf = resource_params$index_sf,
+        index_sf_key = resource_params$index_sf_key,
+        resource_tbl = resource_params$resource_tbl,
+        resource_tbl_key = resource_params$resource_tbl_key,
+        resource_tbl_coords = resource_params$resource_tbl_coords
+      ) %>%
+      dplyr::group_by(.data$provider_location_guid) %>%
+      dplyr::slice(1)
+
+    leaflet::leafletProxy(map_id) %>%
+      leaflet.extras2::addSpinner() %>%
+      leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+
+      # ==================== #
+      # ---- Add Center ----
+    # ===================== #
     leaflet::addAwesomeMarkers(
       lat = location[2],
       lng = location[1],
@@ -239,9 +259,9 @@ addISO <- function(
       icon = center_icon
     ) %>%
 
-    # ================= #
-    # ---- Add ISO ----
-  # ================== #
+      # ================= #
+      # ---- Add ISO ----
+    # ================== #
     leaflet::addPolygons(
       data = iso_result$sf,
       group = "Isochron",
@@ -276,30 +296,40 @@ addISO <- function(
       options = leaflet::pathOptions(pane = "layer_bottom")
     ) %>%
 
+      # ====================== #
+      # ---- Add Resource ----
     # ====================== #
-    # ---- Add Resource ----
-   # ====================== #
-  leaflet::addAwesomeMarkers(
-    data = iso_resource_vax_provider,
-    group = "ISO Resource - Vaccine Providers",
-    #lng = ~longitude, lat = ~latitude,
-    icon = leaflet::makeAwesomeIcon(
-      text = fontawesome::fa("house-medical"),
-      iconColor = 'black',
-      markerColor = "blue"
-    ),
-    popup = ~popup,
-    clusterOptions = leaflet::markerClusterOptions(),
-    clusterId = "vaxCluster",
-    labelOptions = leaflet::labelOptions(
-      style = list(
-        "font-size" = "15px",
-        "font-style" = "bold",
-        "border-color" = "rgba(0,0,0,0.5)"
-      )
-    ),
-    options = leaflet::pathOptions(pane = "layer_top")
-  ) %>%
-  leaflet.extras2::stopSpinner()
+    leaflet::addAwesomeMarkers(
+      data = iso_resource_vax_provider,
+      group = "ISO Resource - Vaccine Providers",
+      lng = ~longitude, lat = ~latitude,
+      icon = leaflet::makeAwesomeIcon(
+        text = fontawesome::fa("house-medical"),
+        iconColor = 'black',
+        markerColor = "blue"
+      ),
+      popup = ~popup,
+      clusterOptions = leaflet::markerClusterOptions(),
+      clusterId = "vaxCluster",
+      labelOptions = leaflet::labelOptions(
+        style = list(
+          "font-size" = "15px",
+          "font-style" = "bold",
+          "border-color" = "rgba(0,0,0,0.5)"
+        )
+      ),
+      options = leaflet::pathOptions(pane = "layer_top")
+    ) %>%
+      leaflet.extras2::stopSpinner()
+
+    shiny::showNotification("Isochron Generated!", type = "message")
+  }, error = function(e) {
+    shiny::showNotification("Failed to generate Isochron. Please try later.", type = "error")
+    print(iso_result)
+    print(iso_result$sf)
+    print(iso_resource_vax_provider)
+    print(e)
+  })
+
 
 }
