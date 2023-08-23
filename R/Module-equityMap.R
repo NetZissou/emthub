@@ -1070,7 +1070,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           resource_tbl = vax_provider,
           resource_tbl_key = "Census_Tract",
           resource_tbl_coords = c("longitude", "latitude")
-        )
+        ),
+        label = input$iso_label
       )
     })
 

@@ -112,7 +112,8 @@ addISO <- function(
   range = c(),
   range_type = c("distance", "time"),
   type = c("car", "walk", "cycle"),
-  resource_params = NULL
+  resource_params = NULL,
+  label = NULL
 ) {
 
   # ================= #
@@ -169,18 +170,35 @@ addISO <- function(
     range_type_label <- "Mins"
   }
 
-  popup_label <-
-    glue::glue(
-      "
+  if (rlang::is_empty(label)) {
+    popup_label <-
+      glue::glue(
+        "
     <b>{addr}</b></br>
     <b>Range: </b>{range} {range_type}</br>
     <b>Type: </b> {type}
     ",
-      addr = full_address,
-      range = range_label,
-      range_type = range_type_label,
-      type = type
-    )
+        addr = full_address,
+        range = range_label,
+        range_type = range_type_label,
+        type = type
+      )
+  } else {
+    popup_label <-
+      glue::glue(
+        "
+    <b>{label}</b></br>
+    <b>{addr}</b></br>
+    <b>Range: </b>{range} {range_type}</br>
+    <b>Type: </b> {type}
+    ",
+        label = label,
+        addr = full_address,
+        range = range_label,
+        range_type = range_type_label,
+        type = type
+      )
+  }
 
   get_center_icon <- function(type) {
 
