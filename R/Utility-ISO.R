@@ -155,18 +155,6 @@ addISO <- function(
       type = type
     )
 
-  iso_resource_vax_provider <-
-    pull_iso_resource(
-      iso_sf = iso_result$sf,
-      index_sf = resource_params$index_sf,
-      index_sf_key = resource_params$index_sf_key,
-      resource_tbl = resource_params$resource_tbl,
-      resource_tbl_key = resource_params$resource_tbl_key,
-      resource_tbl_coords = resource_params$resource_tbl_coords
-    ) %>% dplyr::distinct(.data$provider_location_guid, .data$popup)
-
-  shiny::showNotification("Isochron Generated!", type = "message")
-
   # =========================== #
   # ---- Meta Data for Map ----
   # =========================== #
@@ -216,13 +204,25 @@ addISO <- function(
   # ---- Add to Map ----
   # ==================== #
 
-  leaflet::leafletProxy(map_id) %>%
-    leaflet.extras2::addSpinner() %>%
-    leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+  if (!rlang::is_empty(iso_result$sf) && nrow(iso_result$sf) > 0) {
 
-    # ==================== #
-    # ---- Add Center ----
-  # ===================== #
+    iso_resource_vax_provider <-
+      pull_iso_resource(
+        iso_sf = iso_result$sf,
+        index_sf = resource_params$index_sf,
+        index_sf_key = resource_params$index_sf_key,
+        resource_tbl = resource_params$resource_tbl,
+        resource_tbl_key = resource_params$resource_tbl_key,
+        resource_tbl_coords = resource_params$resource_tbl_coords
+      ) %>% dplyr::distinct(.data$provider_location_guid, .data$popup)
+
+    leaflet::leafletProxy(map_id) %>%
+      leaflet.extras2::addSpinner() %>%
+      leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+
+      # ==================== #
+      # ---- Add Center ----
+    # ===================== #
     leaflet::addAwesomeMarkers(
       lat = location[2],
       lng = location[1],
@@ -239,9 +239,9 @@ addISO <- function(
       icon = center_icon
     ) %>%
 
-    # ================= #
-    # ---- Add ISO ----
-  # ================== #
+      # ================= #
+      # ---- Add ISO ----
+    # ================== #
     leaflet::addPolygons(
       data = iso_result$sf,
       group = "Isochron",
@@ -276,30 +276,37 @@ addISO <- function(
       options = leaflet::pathOptions(pane = "layer_bottom")
     ) %>%
 
+      # ====================== #
+      # ---- Add Resource ----
     # ====================== #
-    # ---- Add Resource ----
-   # ====================== #
-  leaflet::addAwesomeMarkers(
-    data = iso_resource_vax_provider,
-    group = "ISO Resource - Vaccine Providers",
-    #lng = ~longitude, lat = ~latitude,
-    icon = leaflet::makeAwesomeIcon(
-      text = fontawesome::fa("house-medical"),
-      iconColor = 'black',
-      markerColor = "blue"
-    ),
-    popup = ~popup,
-    clusterOptions = leaflet::markerClusterOptions(),
-    clusterId = "vaxCluster",
-    labelOptions = leaflet::labelOptions(
-      style = list(
-        "font-size" = "15px",
-        "font-style" = "bold",
-        "border-color" = "rgba(0,0,0,0.5)"
-      )
-    ),
-    options = leaflet::pathOptions(pane = "layer_top")
-  ) %>%
-  leaflet.extras2::stopSpinner()
+    leaflet::addAwesomeMarkers(
+      data = iso_resource_vax_provider,
+      group = "ISO Resource - Vaccine Providers",
+      #lng = ~longitude, lat = ~latitude,
+      icon = leaflet::makeAwesomeIcon(
+        text = fontawesome::fa("house-medical"),
+        iconColor = 'black',
+        markerColor = "blue"
+      ),
+      popup = ~popup,
+      clusterOptions = leaflet::markerClusterOptions(),
+      clusterId = "vaxCluster",
+      labelOptions = leaflet::labelOptions(
+        style = list(
+          "font-size" = "15px",
+          "font-style" = "bold",
+          "border-color" = "rgba(0,0,0,0.5)"
+        )
+      ),
+      options = leaflet::pathOptions(pane = "layer_top")
+    ) %>%
+      leaflet.extras2::stopSpinner()
+
+    shiny::showNotification("Isochron Generated!", type = "message")
+  } else {
+    shiny::showNotification("Failed to generate Isochron. Please try later.", type = "message")
+    print(iso_result)
+    print(iso_result$sf)
+  }
 
 }
