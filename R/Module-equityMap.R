@@ -692,7 +692,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -747,7 +747,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -803,7 +803,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -869,7 +869,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -937,7 +937,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -1274,7 +1274,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         # ---- Map Tiles ----
       # =================== #
       leaflet::addTiles() %>%
-        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+        #leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+        leaflet::addProviderTiles(leaflet::providers$Esri) %>%
         leaflet::addProviderTiles(leaflet::providers$Esri, group = "Base Map") %>%
         # =================== #
         # ---- Map Pane ----
@@ -1294,7 +1295,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         weight = 1,
         opacity = 0.5,
         dashArray = "3",
-        fillOpacity = 0.5,
+        fillOpacity = 0.7,
         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
         label = ~ paste0(
@@ -1334,7 +1335,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         weight = 1,
         opacity = 0.5,
         dashArray = "3",
-        fillOpacity = 0.5,
+        fillOpacity = 0.7,
         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
         label = ~ paste0(

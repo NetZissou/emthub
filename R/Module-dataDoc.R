@@ -2,6 +2,8 @@ dataDocUI <- function(id) {
   bslib::page_fillable(
     #reactable_searchBar(shiny::NS(id, "data_doc_table"), placeholder = "Search for Data  ..."),
     #reactable_csvDownloadButton(shiny::NS(id, "data_doc_table"), filename = "data_source_documentation.csv"),
+    # shiny::a("For ... information, please use the"),
+    # shiny::actionLink(shiny::NS(id, "go_to_tab_equity_map"), "Equity Map Tab."),
     reactable::reactableOutput(shiny::NS(id, "data_doc_table"))
   )
 }
@@ -11,6 +13,15 @@ dataDocUI <- function(id) {
 dataDocServer <- function(id, app_county) {
 
   shiny::moduleServer(id, function(input, output, session){
+
+    shiny::observeEvent(input$go_to_tab_equity_map, {
+
+      shiny::updateTabsetPanel(
+        session = session,
+        inputId = "emt",
+        selected = "Equity Map"
+      )
+    })
 
     output$data_doc_table <- reactable::renderReactable({
       #shiny::req(app_county$value == "Mahoning")
@@ -32,9 +43,9 @@ dataDocServer <- function(id, app_county) {
           # Cols
           columns = list(
             Name = reactable::colDef(minWidth = 100),
-            Source = reactable::colDef(html = TRUE, minWidth = 100),
-            `Last Updated` = reactable::colDef(minWidth = 50, align = "center"),
-            Notes = reactable::colDef(minWidth = 150)
+            Source = reactable::colDef(html = TRUE, minWidth = 100, filterable = FALSE),
+            `Last Updated` = reactable::colDef(minWidth = 50, align = "center", filterable = FALSE),
+            Notes = reactable::colDef(minWidth = 150, filterable = FALSE)
           )
         )
     })
