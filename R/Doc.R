@@ -36,3 +36,5 @@
 "TOKENS"
 #' PAL
 "PAL"
+#' Data source documentation Mahoning
+"DATA_SOURCE_DOC_Mahoning"

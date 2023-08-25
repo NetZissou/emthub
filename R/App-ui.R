@@ -49,8 +49,10 @@ ui <- function() {
       diseaseOutcomesUI("disease_outcomes")
     ),
 
-    bslib::nav_panel("Data",
-                     shiny::h3("Data Source Documentation")
+    bslib::nav_panel(
+      "Data",
+      shiny::h3("Data Source Documentation"),
+      dataDocUI("data_doc")
     )
   )
 }

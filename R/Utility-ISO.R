@@ -293,7 +293,7 @@ addISO <- function(
         bringToFront = TRUE,
         sendToBack = TRUE
       ),
-      options = leaflet::pathOptions(pane = "layer_bottom")
+      options = leaflet::pathOptions(pane = "layer_middle")
     ) %>%
 
       # ====================== #

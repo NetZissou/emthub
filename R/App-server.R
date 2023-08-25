@@ -60,4 +60,5 @@ server <- function(input, output, session) {
 
   equityMapServer("equity_map", ct_level_data_all, shapefile_list)
 
+  dataDocServer("data_doc")
 }
