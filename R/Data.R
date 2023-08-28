@@ -630,6 +630,13 @@ update_ct_level_data <- function() {
       censustract = .data$census_tract,
       .data$infant_health_score_quantile,
       .data$infant_health_score
+    ) %>%
+    dplyr::mutate(
+      infant_health_score_quantile = dplyr::case_when(
+        infant_health_score_quantile == "Q1" ~ "Q1 (worst)",
+        infant_health_score_quantile == "Q7" ~ "Q7 (best)",
+        TRUE ~ infant_health_score_quantile
+      )
     )
 
 
