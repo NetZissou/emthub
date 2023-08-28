@@ -666,7 +666,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           zoom = 10
         ) %>%
         leaflet::addTiles() %>%
-        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+        leaflet::addProviderTiles(leaflet::providers$Esri) %>%
 
         leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%

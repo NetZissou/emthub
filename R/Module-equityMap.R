@@ -578,15 +578,14 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
         leaflet::leafletProxy("equity_map") %>%
           leaflet::clearGroup( "Hub Highlight") %>%
-          leaflet::addPolygons(
+          leaflet::addPolylines(
             data = SF_HUB_highlight,
             group = "Hub Highlight",
             color = "black",
-            weight = 2,
+            weight = 3,
             opacity = 1,
             dashArray = "1",
-            fillOpacity = 0.1,
-            #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+            fillOpacity = 0,
 
             label = ~ paste0(
               "<b>", HUB_Name, "</b>"
@@ -630,15 +629,14 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
         leaflet::leafletProxy("equity_map") %>%
           leaflet::clearGroup("County Highlight") %>%
-          leaflet::addPolygons(
+          leaflet::addPolylines(
             data = SF_COUNTY_highlight,
             group = "County Highlight",
             color = "#08306b",
-            weight = 2,
+            weight = 3,
             opacity = 1,
             dashArray = "1",
-            fillOpacity = 0.1,
-            #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+            fillOpacity = 0,
 
             label = ~ paste0(
               "<b>", COUNTY, "</b>", "</br>", HUB_Name
@@ -694,7 +692,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -719,7 +717,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             bringToFront = TRUE,
             sendToBack = TRUE
           ),
-          options = leaflet::pathOptions(pane = "layer_bottom")
+          options = leaflet::pathOptions(pane = "layer_middle")
         ) %>%
         leaflet.extras2::stopSpinner()
     }
@@ -749,7 +747,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -776,7 +774,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             bringToFront = TRUE,
             sendToBack = TRUE
           ),
-          options = leaflet::pathOptions(pane = "layer_bottom")
+          options = leaflet::pathOptions(pane = "layer_middle")
         ) %>%
         leaflet.extras2::stopSpinner()
     }
@@ -805,7 +803,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -832,7 +830,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             bringToFront = TRUE,
             sendToBack = TRUE
           ),
-          options = leaflet::pathOptions(pane = "layer_bottom")
+          options = leaflet::pathOptions(pane = "layer_middle")
         ) %>%
         leaflet.extras2::stopSpinner()
     }
@@ -871,7 +869,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -898,7 +896,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             bringToFront = TRUE,
             sendToBack = TRUE
           ),
-          options = leaflet::pathOptions(pane = "layer_bottom")
+          options = leaflet::pathOptions(pane = "layer_middle")
         ) %>%
         leaflet.extras2::stopSpinner()
 
@@ -939,7 +937,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           weight = 1,
           opacity = 0.5,
           dashArray = "3",
-          fillOpacity = 0.5,
+          fillOpacity = 0.7,
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
@@ -966,7 +964,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             bringToFront = TRUE,
             sendToBack = TRUE
           ),
-          options = leaflet::pathOptions(pane = "layer_bottom")
+          options = leaflet::pathOptions(pane = "layer_middle")
         ) %>%
         leaflet.extras2::stopSpinner()
     }
@@ -1276,13 +1274,15 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         # ---- Map Tiles ----
       # =================== #
       leaflet::addTiles() %>%
-        leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+        #leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron) %>%
+        leaflet::addProviderTiles(leaflet::providers$Esri) %>%
         leaflet::addProviderTiles(leaflet::providers$Esri, group = "Base Map") %>%
         # =================== #
         # ---- Map Pane ----
       # =================== #
       leaflet::addMapPane("layer_top", zIndex=420) %>%
-        leaflet::addMapPane("layer_bottom",zIndex=410) %>%
+        leaflet::addMapPane("layer_middle",zIndex=410) %>%
+        leaflet::addMapPane("layer_bottom",zIndex=400) %>%
 
         # ========================= #
         # ---- COVID Case Rate ----
@@ -1295,7 +1295,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         weight = 1,
         opacity = 0.5,
         dashArray = "3",
-        fillOpacity = 0.5,
+        fillOpacity = 0.7,
         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
         label = ~ paste0(
@@ -1322,7 +1322,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           bringToFront = TRUE,
           sendToBack = TRUE
         ),
-        options = leaflet::pathOptions(pane = "layer_bottom")
+        options = leaflet::pathOptions(pane = "layer_middle")
       ) %>%
         # ====================== #
         # ---- Booster Rate ----
@@ -1335,7 +1335,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         weight = 1,
         opacity = 0.5,
         dashArray = "3",
-        fillOpacity = 0.5,
+        fillOpacity = 0.7,
         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
         label = ~ paste0(
@@ -1362,7 +1362,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           bringToFront = TRUE,
           sendToBack = TRUE
         ),
-        options = leaflet::pathOptions(pane = "layer_bottom")
+        options = leaflet::pathOptions(pane = "layer_middle")
       ) %>%
         # ========================== #
         # ---- HUB Service Area ----
