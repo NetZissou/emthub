@@ -27,7 +27,7 @@ dataDocServer <- function(id, app_county) {
       #shiny::req(app_county$value == "Mahoning")
 
       emthub::DATA_SOURCE_DOC_Mahoning %>%
-        purrr::set_names(c("Name", "Source", "Last Updated", "Notes")) %>%
+        purrr::set_names(c("Name", "Source", "Last Accessed", "Last Updated", "Notes")) %>%
         reactable::reactable(
           # Table Format
           filterable = TRUE,
@@ -43,9 +43,10 @@ dataDocServer <- function(id, app_county) {
           # Cols
           columns = list(
             Name = reactable::colDef(minWidth = 100),
-            Source = reactable::colDef(html = TRUE, minWidth = 100, filterable = FALSE),
-            `Last Updated` = reactable::colDef(minWidth = 50, align = "center", filterable = FALSE),
-            Notes = reactable::colDef(minWidth = 150, filterable = FALSE)
+            Source = reactable::colDef(html = TRUE, minWidth = 100, filterable = FALSE, sortable = FALSE),
+            `Last Accessed` = reactable::colDef(minWidth = 50, align = "center", filterable = FALSE, sortable = FALSE),
+            `Last Updated` = reactable::colDef(minWidth = 50, align = "center", filterable = FALSE, sortable = FALSE),
+            Notes = reactable::colDef(html = TRUE, minWidth = 150, filterable = FALSE, sortable = FALSE)
           )
         )
     })

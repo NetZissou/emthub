@@ -5,7 +5,7 @@
 \alias{DATA_SOURCE_DOC_Mahoning}
 \title{Data source documentation Mahoning}
 \format{
-An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 8 rows and 4 columns.
+An object of class \code{tbl_df} (inherits from \code{tbl}, \code{data.frame}) with 9 rows and 5 columns.
 }
 \usage{
 DATA_SOURCE_DOC_Mahoning
