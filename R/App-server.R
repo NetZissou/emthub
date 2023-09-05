@@ -23,7 +23,7 @@ server <- function(input, output, session) {
     if (!rlang::is_empty(query$county) && stringr::str_to_title(query$county) == "Mahoning") {
       shiny::hideTab(
         inputId = "emt",
-        target = "Equity Map"
+        target = "Main Map"
       )
 
       shiny::updateTabsetPanel(

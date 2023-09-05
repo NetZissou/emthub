@@ -9,7 +9,7 @@ ui <- function() {
 
   bslib::page_navbar(
     id = "emt",
-    title = "EMT Hub Dashboard",
+    title = "Equity Mapping Tool Dashboard",
 
     theme = bslib::bs_theme(
       font_scale = NULL,
@@ -19,7 +19,7 @@ ui <- function() {
 
     sidebar = NULL,
 
-    #selected = "Equity Map",
+    selected = "Main Map",
 
     shiny::tags$head(
       # Note the wrapping of the string in HTML()
@@ -30,14 +30,19 @@ ui <- function() {
     ),
 
     bslib::nav_panel(
-      "Equity Map",
+      "Introduction"
+      # TODO: Intro Page Module
+    ),
+
+    bslib::nav_panel(
+      "Main Map",
       waiter::autoWaiter(),
       equityMapUI("equity_map")
 
     ),
 
     bslib::nav_panel(
-      "Disease Outcomes Map",
+      "Chronic Diseases Mapping Tool",
       waiter::waiterPreloader(
         html = shiny::tagList(
           waiter::spin_flower(),
@@ -50,7 +55,7 @@ ui <- function() {
     ),
 
     bslib::nav_panel(
-      "Data",
+      "Data Sources",
       shiny::h3("Data Source Documentation"),
       dataDocUI("data_doc")
     )
