@@ -1,5 +1,5 @@
 ## code to prepare `DISEASE_DATA` dataset goes here
-#DISEASE_DATA <- get_disease_data()
+
 DISEASE_DATA <- get_ct_level_data()
 DISEASE_OUTCOMES <-
   c(

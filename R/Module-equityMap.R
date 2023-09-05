@@ -134,29 +134,16 @@ equityMapUI <- function(id) {
 
     bslib::navset_card_tab(
       full_screen = TRUE,
-      # bslib::card_header(
-      #   bslib::card_body(
-      #     min_height = 60,
-      #     shiny::actionButton(
-      #       shiny::NS(id, "reset"),
-      #       label = "Reset"
-      #     )
-      #     # bslib::layout_column_wrap(
-      #     #   width = 1/2,
-      #     #   shiny::actionButton(
-      #     #     shiny::NS(id, "apply"),
-      #     #     label = "Apply"
-      #     #   ),
-      #     #
-      #     #   shiny::actionButton(
-      #     #     shiny::NS(id, "reset"),
-      #     #     label = "Reset"
-      #     #   )
-      #     # )
-      #   )
-      # ),
+      bslib::card_header(
+        bslib::card_body(
+          min_height = 50,
+          shiny::helpText(
+            "THE INFORMATION BELOW IS SUBJECT TO CHANGE. PLEASE READ THE DOCUMENTATION ON THE DATA SOURCE PAGE AND WATCH THE TRAINING VIDEO BEFORE USING THE TABS AND FUNCTIONS BELOW."
+          )
+        )
+      ),
       bslib::nav_panel(
-        title = "Layers Control",
+        title = "Map Filter",
 
         bslib::card_body(
 
@@ -179,6 +166,8 @@ equityMapUI <- function(id) {
             width = "100%"
           ),
 
+          shiny::helpText("Please activate the map layer before filtering the data."),
+
 
           shiny::sliderInput(
             shiny::NS(id, "range_svi"),
@@ -191,19 +180,19 @@ equityMapUI <- function(id) {
 
           shiny::sliderInput(
             shiny::NS(id, "range_hispanic_latino"),
-            "% Hispanic or Latino",
+            "Percent (%) Hispanic or Latino",
             min = 0,
-            max = 1,
-            value = c(0,1),
+            max = 100,
+            value = c(0,100),
             width = "100%"
           ),
 
           shiny::sliderInput(
             shiny::NS(id, "range_english"),
-            "Pct Households Speaking Limited English",
+            "Percent (%) Households Speaking Limited English",
             min = 0,
-            max = 1,
-            value = c(0,1),
+            max = 100,
+            value = c(0,100),
             width = "100%"
           ),
 
@@ -224,7 +213,7 @@ equityMapUI <- function(id) {
         )
       ),
       bslib::nav_panel(
-        title = "Vaccine Providers",
+        title = "Vax Places",
 
         shiny::fluidRow(
           #width = 1/2,
@@ -257,7 +246,7 @@ equityMapUI <- function(id) {
 
 
       bslib::nav_panel(
-        title = "Places",
+        title = "Place Finder",
         shiny::fluidRow(
           shiny::column(
             width = 6,
@@ -287,7 +276,7 @@ equityMapUI <- function(id) {
       ),
 
       bslib::nav_panel(
-        title = "ISO",
+        title = "Access Tool",
         shiny::fluidRow(
           shiny::column(
             width = 12,
@@ -731,8 +720,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           .data$GEOID, .data$prcnt_limited_english_speaking_households
         ) %>%
         dplyr::filter(
-          .data$prcnt_limited_english_speaking_households >= 100*range[1],
-          .data$prcnt_limited_english_speaking_households <= 100*range[2],
+          .data$prcnt_limited_english_speaking_households >= range[1],
+          .data$prcnt_limited_english_speaking_households <= range[2],
         )
 
       leaflet::leafletProxy("equity_map") %>%
@@ -787,8 +776,8 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           .data$GEOID, .data$percent_hispanic_or_latino
         ) %>%
         dplyr::filter(
-          .data$percent_hispanic_or_latino >= 100*range[1],
-          .data$percent_hispanic_or_latino <= 100*range[2],
+          .data$percent_hispanic_or_latino >= range[1],
+          .data$percent_hispanic_or_latino <= range[2],
         )
 
       leaflet::leafletProxy("equity_map") %>%
@@ -1267,7 +1256,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       leaflet::leaflet(
         data = ct_level_data,
         options = leaflet::leafletOptions(
-          zoomControl = FALSE
+          zoomControl = TRUE
         )
       ) %>%
         # =================== #

@@ -655,7 +655,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
       leaflet::leaflet(
         data = ct_level_data(),
         options = leaflet::leafletOptions(
-          zoomControl = FALSE
+          zoomControl = TRUE
         )
       ) %>%
         leaflet.extras2::addSpinner() %>%
