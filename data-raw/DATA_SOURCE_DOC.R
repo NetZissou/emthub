@@ -1,4 +1,8 @@
 ## code to prepare `DATA_SOURCE_DOC` dataset goes here
+
+# ======================= #
+# ---- Documentation ----
+# ======================= #
 DATA_SOURCE_DOC_Mahoning <- list(
   list(
     name = "Polling location data",
@@ -65,4 +69,410 @@ DATA_SOURCE_DOC_Mahoning <- list(
   )
 ) %>%
   dplyr::bind_rows()
+
+
+# =============== #
+# ---- Files ----
+# =============== #
+
+# > Raw: Census Tract Level
+fs::dir_info(
+  emthub::ROOT
+) %>% dplyr::select(path)
+
+
+file_tbl <-
+  list(
+    list(
+      file_name = "emt_oh_ctracts_dataset.csv",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data",
+        "raw", "ct_level"
+      ),
+      file_type = "CSV",
+      data_type = "Raw/Census Tract Level",
+      owner = "Yogita",
+      #last_updated = "08/15/2023",
+      notes = ""
+    ),
+
+    list(
+      file_name = "birth_outcomes.csv",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data",
+        "raw", "ct_level"
+      ),
+      file_type = "CSV",
+      data_type = "Raw/Census Tract Level",
+      owner = "Philip",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "travel_time_to_nearest_ped_vacc_provider_by_car_2023-03-02.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data",
+        "raw", "ct_level"
+      ),
+      file_type = "GeoJSON",
+      data_type = "Raw/Census Tract Level",
+      owner = "Yogita/Ahmad",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "travel_time_to_nearest_ped_vacc_provider_by_transit_2023-03-23.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data",
+        "raw", "ct_level"
+      ),
+      file_type = "GeoJSON",
+      data_type = "Raw/Census Tract Level",
+      owner = "Yogita/Ahmad",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    # > Raw: County
+
+
+    list(
+      file_name = "Ohio_COVID_case_and_vacc_rates.csv",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data",
+        "raw", "county_level"
+      ),
+      file_type = "CSV",
+      data_type = "Raw/County Level",
+      owner = "Yogita",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    # > Raw: Point Level
+
+    list(
+      file_name = "cdc_vax_providers.csv",
+      file_folder = fs::path(
+        "/fs/ess/PDE0003/vaccineaccess/"
+      ),
+      file_type = "CSV",
+      data_type = "Raw/Point Level",
+      owner = "Yogita",
+      #last_updated = "",
+      notes = "Update weekly"
+    ),
+
+    list(
+      file_name = "mahoning_business.csv",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Point Level Data", "raw"
+      ),
+      file_type = "CSV",
+      data_type = "Raw/Point Level/Mahoning Use Case",
+      owner = "Net/Philip",
+      #last_updated = "",
+      notes = ""
+    ),
+
+
+    # > Processed
+
+    list(
+      file_name = "emt_oh_ctracts_dataset.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data"
+      ),
+      file_type = "GeoJson",
+      data_type = "Processed/Census Tract Level",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "emt_oh_ctracts_dataset.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data"
+      ),
+      file_type = "Parquet",
+      data_type = "Processed/Census Tract Level",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "Ohio_COVID_case_and_vacc_rates.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data"
+      ),
+      file_type = "GeoJson",
+      data_type = "Processed/County Level",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "Ohio_COVID_case_and_vacc_rates.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data"
+      ),
+      file_type = "Parquet",
+      data_type = "Processed/County Level",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "poi_for_ohio.csv",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Point Level Data"
+      ),
+      file_type = "CSV",
+      data_type = "Processed/Point Level",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "poi_for_ohio.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Point Level Data"
+      ),
+      file_type = "Parquet",
+      data_type = "Processed/Point Level",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "cdc_vax_providers.csv",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Point Level Data"
+      ),
+      file_type = "CSV",
+      data_type = "Processed/Point Level",
+      owner = "Net/Yogita",
+      #last_updated = "",
+      notes = "Update weekly"
+    ),
+
+    list(
+      file_name = "cdc_vax_providers.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Point Level Data"
+      ),
+      file_type = "Parquet",
+      data_type = "Processed/Point Level",
+      owner = "Net",
+      #last_updated = "",
+      notes = "Update weekly"
+    ),
+
+    list(
+      file_name = "mahoning_accessibility_ctracts_2010.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data"
+      ),
+      file_type = "GeoJSON",
+      data_type = "Processed/Mahoning Use Case",
+      owner = "Yogita/Ahamd",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "mahoning_accessibility_ctracts_2010.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Regional Rates Data"
+      ),
+      file_type = "Parquet",
+      data_type = "Processed/Mahoning Use Case",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "mahoning_business_modified.csv",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Point Level Data"
+      ),
+      file_type = "CSV",
+      data_type = "Processed/Point Level/Mahoning Use Case",
+      owner = "Net/Philip",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "	mahoning_business_modified.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Point Level Data"
+      ),
+      file_type = "Parquet",
+      data_type = "Processed/Point Level/Mahoning Use Case",
+      owner = "Net/Philip",
+      #last_updated = "",
+      notes = ""
+    ),
+
+
+    # ==================== #
+    # ---- Shapefiles ----
+    # ==================== #
+    list(
+      file_name = "sf_census_tract.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile"
+      ),
+      file_type = "GeoJSON",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "sf_census_tract.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile"
+      ),
+      file_type = "Parquet",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "sf_county.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile"
+      ),
+      file_type = "GeoJSON",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "sf_county.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile"
+      ),
+      file_type = "Parquet",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "sf_hub.geojson",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile"
+      ),
+      file_type = "GeoJSON",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "sf_hub.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile"
+      ),
+      file_type = "Parquet",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "sf_zip.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile"
+      ),
+      file_type = "Parquet",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = ""
+    ),
+
+    list(
+      file_name = "sf_zip_{county}.parquet",
+      file_folder = fs::path(
+        emthub::ROOT,
+        "Shapefile/sf_zip_by_county"
+      ),
+      file_type = "Parquet",
+      data_type = "Shapefile",
+      owner = "Net",
+      #last_updated = "",
+      notes = "This folder contains Ohio ZIP shapefiles by county"
+    )
+
+  ) %>%
+  dplyr::bind_rows()
+
+
+# ================================= #
+# ---- Dataset: Regional Rates ----
+# ================================= #
+
+# > Census Tract Level Data Set
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 usethis::use_data(DATA_SOURCE_DOC_Mahoning, overwrite = TRUE)
