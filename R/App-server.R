@@ -7,6 +7,26 @@
 #' @export
 server <- function(input, output, session) {
 
+  # =============== #
+  # ---- Intro ----
+  # =============== #
+  # bslib::bs_themer()
+
+  shinyalert::shinyalert(
+    title = "Equity Mapping Tool",
+    text = get_intro_content(popup = TRUE),
+    size = "l",
+    closeOnEsc = TRUE,
+    closeOnClickOutside = TRUE,
+    html = TRUE,
+    type = "",
+    showConfirmButton = FALSE,
+    showCancelButton = FALSE,
+    timer = 0,
+    imageUrl = "",
+    animation = TRUE
+  )
+
   # ====================== #
   # ---- Hyper Params ----
   # ====================== #
@@ -23,7 +43,7 @@ server <- function(input, output, session) {
     if (!rlang::is_empty(query$county) && stringr::str_to_title(query$county) == "Mahoning") {
       shiny::hideTab(
         inputId = "emt",
-        target = "Equity Map"
+        target = "Main Map"
       )
 
       shiny::updateTabsetPanel(

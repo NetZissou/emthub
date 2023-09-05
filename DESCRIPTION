@@ -45,6 +45,7 @@ Imports:
     sf,
     sfarrow,
     shiny,
+    shinyalert,
     shinyjs,
     sortable,
     stringr,

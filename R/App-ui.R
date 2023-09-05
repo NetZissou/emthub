@@ -9,7 +9,7 @@ ui <- function() {
 
   bslib::page_navbar(
     id = "emt",
-    title = "EMT Hub Dashboard",
+    title = "Equity Mapping Tool Dashboard",
 
     theme = bslib::bs_theme(
       font_scale = NULL,
@@ -17,27 +17,52 @@ ui <- function() {
       bootswatch = "pulse"
     ),
 
+    shiny::tags$head(
+      shiny::tags$style(
+        shiny::HTML(
+          '
+          .intro h1, .intro h2, .intro h3 {
+            font-family: serif;
+          }
+
+          .intro h1 {
+            font-size: 45px;
+          }
+
+          .intro h2 {
+            font-size: 35px;
+          }
+
+          .intro body {
+            font-family: serif;
+            font-size: 30px;
+          }
+          meter::-webkit-meter-optimum-value {
+            background: red; /* Green */
+          }
+          '
+        )
+      )
+    ),
+
     sidebar = NULL,
 
-    #selected = "Equity Map",
+    selected = "Main Map",
 
-    shiny::tags$head(
-      # Note the wrapping of the string in HTML()
-      shiny::tags$style(shiny::HTML("
-    meter::-webkit-meter-optimum-value {
-    background: red; /* Green */
-    }"))
+    bslib::nav_panel(
+      "Introduction",
+      introUI("intro")
     ),
 
     bslib::nav_panel(
-      "Equity Map",
+      "Main Map",
       waiter::autoWaiter(),
       equityMapUI("equity_map")
 
     ),
 
     bslib::nav_panel(
-      "Disease Outcomes Map",
+      "Chronic Diseases Mapping Tool",
       waiter::waiterPreloader(
         html = shiny::tagList(
           waiter::spin_flower(),
@@ -50,7 +75,7 @@ ui <- function() {
     ),
 
     bslib::nav_panel(
-      "Data",
+      "Data Sources",
       shiny::h3("Data Source Documentation"),
       dataDocUI("data_doc")
     )
