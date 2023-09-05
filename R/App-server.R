@@ -27,6 +27,15 @@ server <- function(input, output, session) {
     animation = TRUE
   )
 
+  # shiny::showModal(
+  #   shiny::modalDialog(
+  #     get_intro_content(popup = TRUE),
+  #     title = "Equity Mapping Tool",
+  #     size = "l",
+  #     easyClose = TRUE
+  #   )
+  # )
+
   # ====================== #
   # ---- Hyper Params ----
   # ====================== #
