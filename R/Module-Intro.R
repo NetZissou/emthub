@@ -23,7 +23,6 @@ get_intro_content <- function(popup = FALSE) {
         shiny::tags$b( "Empowering community health workers with local data for local decisions to advance the health of all Ohioans.")
       ),
 
-      shiny::tags$br(),
 
       shiny::tags$p(
         "This web application provides maps and data to support the work of community health workers. Specifically, this tool supports COVID-19 public health response efforts, including building community resiliency by addressing social determinants of health. This web application is one of several tools provided by the Equity Mapping Tool project."

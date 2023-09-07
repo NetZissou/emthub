@@ -1,371 +1,253 @@
-# equityMapUItest <- function(id) {
-#
-#   bslib::layout_columns(
-#
-#     col_widths = c(9, 3),
-#
-#     bslib::card(
-#
-#       bslib::card_body(
-#         class = "p-0",
-#         leaflet::leafletOutput(shiny::NS(id, "equity_map"))
-#       ),
-#       full_screen = TRUE
-#     ),
-#
-#     bslib::card(
-#       title = NULL,
-#       full_screen = TRUE,
-#
-#       # shiny::varSelectInput(
-#       #   "var", "Select variable",
-#       #   mtcars
-#       # ),
-#
-#       bslib::card_body(
-#         min_height = 50,
-#         bslib::layout_column_wrap(
-#           width = 1/2,
-#           shiny::actionButton(
-#             shiny::NS(id, "apply"),
-#             label = "Apply"
-#           ),
-#
-#           shiny::actionButton(
-#             shiny::NS(id, "reset"),
-#             label = "Reset"
-#           )
-#         )
-#       ),
-#       bslib::card_body(
-#         shiny::selectInput(
-#           shiny::NS(id, "selection_hub"), label = "Hub Selection",
-#           choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
-#           multiple = TRUE
-#         ),
-#
-#         shiny::selectInput(
-#           shiny::NS(id, "selection_county"), label = "County Selection",
-#           choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
-#           multiple = TRUE
-#         ),
-#
-#         shiny::selectInput(
-#           shiny::NS(id, "selection_vax_type"), label = "Vaccine Type",
-#           choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_type,
-#           multiple = TRUE
-#         ),
-#
-#         shiny::selectInput(
-#           shiny::NS(id, "selection_point_of_interest"), label = "Point of Interest Type",
-#           choices = emthub::EQUITY_MAP_FILTER_CHOICES$point_of_interest,
-#           multiple = TRUE
-#         ),
-#
-#         shiny::sliderInput(
-#           shiny::NS(id, "range_svi"),
-#           "Social Volnerability Index-2018 (Recalculated)",
-#           min = 0,
-#           max = 1,
-#           value = c(0,1)
-#         ),
-#
-#         # shiny::selectInput(
-#         #   shiny::NS(id, "selection_last_3wks_quantile"), label = "Cases Last 3 Weeks Quantile",
-#         #   choices = NULL,
-#         #   multiple = TRUE
-#         # ),
-#
-#         # shiny::selectInput(
-#         #   shiny::NS(id, "selection_booster_updake_category"), label = "Bivalent Booster Uptake Category",
-#         #   choices = NULL,
-#         #   multiple = TRUE
-#         # ),
-#
-#         shiny::sliderInput(
-#           shiny::NS(id, "range_hispanic_latino"),
-#           "% Hispanic or Latino",
-#           min = 0,
-#           max = 1,
-#           value = c(0,1)
-#         ),
-#
-#         shiny::sliderInput(
-#           shiny::NS(id, "range_english"),
-#           "% Households Speaking Limited English",
-#           min = 0,
-#           max = 1,
-#           value = c(0,1)
-#         ),
-#
-#
-#         shiny::selectInput(
-#           shiny::NS(id, "selection_nearest_vax_by_car"), label = "Car Time to Nearest Pediatric Vax Provider",
-#           choices = emthub::EQUITY_MAP_FILTER_CHOICES$nearest_vax_by_car,
-#           multiple = TRUE
-#         ),
-#
-#         shiny::selectInput(
-#           shiny::NS(id, "selection_nearest_vax_by_transit"), label = "Transit Time to Nearest Pediatric Vax Provider",
-#           choices = emthub::EQUITY_MAP_FILTER_CHOICES$nearest_vax_by_transit,
-#           multiple = TRUE
-#         )
-#       )
-#     )
-#
-#   )
-#
-# }
 
 equityMapUI <- function(id) {
 
-  bslib::layout_columns(
+  bslib::page_fillable(
 
-    col_widths = c(8, 4),
+    bslib::layout_columns(
 
-    bslib::card(
+      col_widths = c(8, 4),
 
-      bslib::card_body(
-        class = "p-0",
-        leaflet::leafletOutput(shiny::NS(id, "equity_map"))
-      ),
-      full_screen = TRUE
-    ),
+      bslib::card(
 
-    bslib::navset_card_tab(
-      full_screen = TRUE,
-      bslib::card_header(
         bslib::card_body(
-          min_height = 50,
+          class = "p-0",
+          leaflet::leafletOutput(shiny::NS(id, "equity_map"))
+        ),
+        full_screen = TRUE
+      ),
+
+      bslib::navset_card_tab(
+        full_screen = TRUE,
+        bslib::card_header(
           shiny::helpText(
             "THE INFORMATION BELOW IS SUBJECT TO CHANGE. PLEASE READ THE DOCUMENTATION ON THE DATA SOURCE PAGE AND WATCH THE TRAINING VIDEO BEFORE USING THE TABS AND FUNCTIONS BELOW."
           )
-        )
-      ),
-      bslib::nav_panel(
-        title = "Map Filter",
-
-        bslib::card_body(
-
-          shiny::actionButton(
-            shiny::NS(id, "reset"),
-            label = "Reset"
-          ),
-
-          shiny::selectInput(
-            shiny::NS(id, "selection_hub"), label = "Hub Selection",
-            choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
-            multiple = TRUE,
-            width = "100%"
-          ),
-
-          shiny::selectInput(
-            shiny::NS(id, "selection_county"), label = "County Selection",
-            choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
-            multiple = TRUE,
-            width = "100%"
-          ),
-
-          shiny::helpText("Please activate the map layer before filtering the data."),
-
-
-          shiny::sliderInput(
-            shiny::NS(id, "range_svi"),
-            "Social Volnerability Index-2018 (Recalculated)",
-            min = 0,
-            max = 1,
-            value = c(0,1),
-            width = "100%"
-          ),
-
-          shiny::sliderInput(
-            shiny::NS(id, "range_hispanic_latino"),
-            "Percent (%) Hispanic or Latino",
-            min = 0,
-            max = 100,
-            value = c(0,100),
-            width = "100%"
-          ),
-
-          shiny::sliderInput(
-            shiny::NS(id, "range_english"),
-            "Percent (%) Households Speaking Limited English",
-            min = 0,
-            max = 100,
-            value = c(0,100),
-            width = "100%"
-          ),
-
-
-          shiny::selectInput(
-            shiny::NS(id, "selection_nearest_vax_by_car"), label = "Car Time to Nearest Pediatric Vax Provider",
-            choices = emthub::EQUITY_MAP_FILTER_CHOICES$nearest_vax_by_car,
-            multiple = TRUE,
-            width = "100%"
-          ),
-
-          shiny::selectInput(
-            shiny::NS(id, "selection_nearest_vax_by_transit"), label = "Transit Time to Nearest Pediatric Vax Provider",
-            choices = emthub::EQUITY_MAP_FILTER_CHOICES$nearest_vax_by_transit,
-            multiple = TRUE,
-            width = "100%"
-          )
-        )
-      ),
-      bslib::nav_panel(
-        title = "Vax Places",
-
-        shiny::fluidRow(
-          #width = 1/2,
-          shiny::column(
-            width = 6,
-            shiny::selectInput(
-              shiny::NS(id, "selection_vax_provider_type"),
-              label = "Bivalent Booster Type",
-              choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_type,
-              multiple = TRUE
-            )
-          ),
-
-          shiny::column(
-            width = 6,
-            shiny::selectInput(
-              shiny::NS(id, "selection_vax_provider_hub"),
-              label = "Hub",
-              choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
-              multiple = TRUE
-            )
-          )
-
         ),
-        reactable_searchBar(shiny::NS(id, "vax_provider_table"), placeholder = "Search for providers ..."),
-        reactable_csvDownloadButton(shiny::NS(id, "vax_provider_table"), filename = "vaccine_provider.csv"),
-        shiny::helpText("Toggle to add places to the map"),
-        reactable::reactableOutput(shiny::NS(id, "vax_provider_table"), height = "1200px")
-      ),
+        bslib::nav_panel(
+          title = "Map Filter",
 
+          bslib::card_body(
 
-      bslib::nav_panel(
-        title = "Place Finder",
-        shiny::fluidRow(
-          shiny::column(
-            width = 6,
+            shiny::actionButton(
+              shiny::NS(id, "reset"),
+              label = "Reset"
+            ),
+
             shiny::selectInput(
-              shiny::NS(id, "selection_poi_type"),
-              label = "Type",
-              choices = emthub::EQUITY_MAP_FILTER_CHOICES$point_of_interest,
-              multiple = TRUE
-            )
-          ),
-
-          shiny::column(
-            width = 6,
-            shiny::selectInput(
-              shiny::NS(id, "selection_poi_hub"),
-              label = "Hub",
+              shiny::NS(id, "selection_hub"), label = "Hub Selection",
               choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
-              multiple = TRUE
-            )
-          )
-        ),
-
-        reactable_searchBar(shiny::NS(id, "poi_table"), placeholder = "Search for Place of Interest ..."),
-        reactable_csvDownloadButton(shiny::NS(id, "poi_table"), filename = "poi.csv"),
-        shiny::helpText("Toggle to add places to the map"),
-        reactable::reactableOutput(shiny::NS(id, "poi_table"))
-      ),
-
-      bslib::nav_panel(
-        title = "Access Tool",
-        shiny::fluidRow(
-          shiny::column(
-            width = 12,
-            shiny::textInput(
-              shiny::NS(id, "iso_location"),
-              label = "Full Address",
-              placeholder = "street, city, state, zip",
+              multiple = TRUE,
               width = "100%"
             ),
-            shiny::textInput(
-              shiny::NS(id, "iso_label"),
-              label = "Label",
-              placeholder = "Label the isochrone, not required",
-              width = "100%"
-            )
-          )
-        ),
-        shiny::fluidRow(
-          shiny::column(
-            width = 6,
-            shiny::numericInput(
-              shiny::NS(id, "iso_lat"),
-              label = "Latitude ",
-              value = NULL
-            )
-          ),
-          shiny::column(
-            width = 6,
-            shiny::numericInput(
-              shiny::NS(id, "iso_lng"),
-              label = "Longitude ",
-              value = NULL
-            )
-          ),
-          shiny::helpText("Click location on the map to obtain lat, lng. Leave empty if full address is provided.")
-        ),
 
-        shiny::fluidRow(
-          shiny::column(
-            width = 4,
             shiny::selectInput(
-              shiny::NS(id, "iso_range_type"),
-              label = "Measurement",
-              choices = c("distance", "time"),
-              multiple = FALSE
+              shiny::NS(id, "selection_county"), label = "County Selection",
+              choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
+              multiple = TRUE,
+              width = "100%"
             ),
-          ),
-          shiny::column(
-            width = 4,
-            shiny::numericInput(
-              shiny::NS(id, "iso_range"),
-              label = "Range (min/km)",
-              value = 5
-            )
-          ),
-          shiny::column(
-            width = 3,
+
+            shiny::helpText("Please activate the map layer before filtering the data."),
+
+
+            shiny::sliderInput(
+              shiny::NS(id, "range_svi"),
+              "Social Vulnerability Index-2018 (Recalculated)",
+              min = 0,
+              max = 1,
+              value = c(0,1),
+              width = "100%"
+            ),
+
+            shiny::sliderInput(
+              shiny::NS(id, "range_hispanic_latino"),
+              "Percent (%) Hispanic or Latino",
+              min = 0,
+              max = 100,
+              value = c(0,100),
+              width = "100%"
+            ),
+
+            shiny::sliderInput(
+              shiny::NS(id, "range_english"),
+              "Percent (%) Households Speaking Limited English",
+              min = 0,
+              max = 100,
+              value = c(0,100),
+              width = "100%"
+            ),
+
+
             shiny::selectInput(
-              shiny::NS(id, "iso_type"),
-              label = "Transportation",
-              choices = c("car", "walk", "cycle"),
-              multiple = FALSE
+              shiny::NS(id, "selection_nearest_vax_by_car"), label = "Car Time to Nearest Pediatric Vax Provider",
+              choices = emthub::EQUITY_MAP_FILTER_CHOICES$nearest_vax_by_car,
+              multiple = TRUE,
+              width = "100%"
+            ),
+
+            shiny::selectInput(
+              shiny::NS(id, "selection_nearest_vax_by_transit"), label = "Transit Time to Nearest Pediatric Vax Provider",
+              choices = emthub::EQUITY_MAP_FILTER_CHOICES$nearest_vax_by_transit,
+              multiple = TRUE,
+              width = "100%"
             )
           )
         ),
+        bslib::nav_panel(
+          title = "Vax Places",
 
-        shiny::fluidRow(
-          shiny::column(
-            width = 6,
-            shiny::actionButton(
-              shiny::NS(id, "iso_add"),
-              label = "Add Isochrones",
-              width = "100%"
+          shiny::fluidRow(
+            #width = 1/2,
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_vax_provider_type"),
+                label = "Bivalent Booster Type",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$vax_type,
+                multiple = TRUE
+              )
+            ),
+
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_vax_provider_hub"),
+                label = "Hub",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
+                multiple = TRUE
+              )
+            )
+
+          ),
+          reactable_searchBar(shiny::NS(id, "vax_provider_table"), placeholder = "Search for providers ..."),
+          reactable_csvDownloadButton(shiny::NS(id, "vax_provider_table"), filename = "vaccine_provider.csv"),
+          shiny::helpText("Toggle to add places to the map. If you do not see the table below please click the expand button in the bottom-right corner."),
+          reactable::reactableOutput(shiny::NS(id, "vax_provider_table"), inline = TRUE)
+        ),
+
+
+        bslib::nav_panel(
+          title = "Place Finder",
+          shiny::fluidRow(
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_poi_type"),
+                label = "Type",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$point_of_interest,
+                multiple = TRUE
+              )
+            ),
+
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_poi_hub"),
+                label = "Hub",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$hub,
+                multiple = TRUE
+              )
             )
           ),
 
-          shiny::column(
-            width = 6,
-            shiny::actionButton(
-              shiny::NS(id, "iso_clear"),
-              label = "Clear Isochrones",
-              width = "100%"
+          reactable_searchBar(shiny::NS(id, "poi_table"), placeholder = "Search for Place of Interest ..."),
+          reactable_csvDownloadButton(shiny::NS(id, "poi_table"), filename = "poi.csv"),
+          shiny::helpText("Toggle to add places to the map. If you do not see the table below please click the expand button in the bottom-right corner."),
+          reactable::reactableOutput(shiny::NS(id, "poi_table"), inline = TRUE)
+        ),
+
+        bslib::nav_panel(
+          title = "Access Tool",
+          shiny::fluidRow(
+            shiny::column(
+              width = 12,
+              shiny::textInput(
+                shiny::NS(id, "iso_location"),
+                label = "Full Address",
+                placeholder = "street, city, state, zip",
+                width = "100%"
+              ),
+              shiny::textInput(
+                shiny::NS(id, "iso_label"),
+                label = "Label",
+                placeholder = "Label the isochrone, not required",
+                width = "100%"
+              )
+            )
+          ),
+          shiny::fluidRow(
+            shiny::column(
+              width = 6,
+              shiny::numericInput(
+                shiny::NS(id, "iso_lat"),
+                label = "Latitude ",
+                value = NULL
+              )
+            ),
+            shiny::column(
+              width = 6,
+              shiny::numericInput(
+                shiny::NS(id, "iso_lng"),
+                label = "Longitude ",
+                value = NULL
+              )
+            ),
+            shiny::helpText("Click location on the map to obtain lat, lng. Leave empty if full address is provided.")
+          ),
+
+          shiny::fluidRow(
+            shiny::column(
+              width = 4,
+              shiny::selectInput(
+                shiny::NS(id, "iso_range_type"),
+                label = "Measurement",
+                choices = c("distance", "time"),
+                multiple = FALSE
+              ),
+            ),
+            shiny::column(
+              width = 4,
+              shiny::numericInput(
+                shiny::NS(id, "iso_range"),
+                label = "Range (min/km)",
+                value = 5
+              )
+            ),
+            shiny::column(
+              width = 3,
+              shiny::selectInput(
+                shiny::NS(id, "iso_type"),
+                label = "Transportation",
+                choices = c("car", "walk", "cycle"),
+                multiple = FALSE
+              )
+            )
+          ),
+
+          shiny::fluidRow(
+            shiny::column(
+              width = 6,
+              shiny::actionButton(
+                shiny::NS(id, "iso_add"),
+                label = "Add Isochrones",
+                width = "100%"
+              )
+            ),
+
+            shiny::column(
+              width = 6,
+              shiny::actionButton(
+                shiny::NS(id, "iso_clear"),
+                label = "Clear Isochrones",
+                width = "100%"
+              )
             )
           )
-        )
 
+        )
       )
-    )
 
+    )
   )
 
 }
@@ -1086,6 +968,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         dplyr::collect() %>%
         reactable::reactable(
           # Table Format
+          # height = 600,
           filterable = TRUE,
           outlined = TRUE,
           # Selection
@@ -1181,6 +1064,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
         ) %>%
         dplyr::collect() %>%
         reactable::reactable(
+          # height = 600,
           # Table Format
           filterable = TRUE,
           outlined = TRUE,
