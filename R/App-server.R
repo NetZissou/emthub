@@ -27,11 +27,20 @@ server <- function(input, output, session) {
     animation = TRUE
   )
 
+  # shiny::showModal(
+  #   shiny::modalDialog(
+  #     get_intro_content(popup = TRUE),
+  #     title = "Equity Mapping Tool",
+  #     size = "l",
+  #     easyClose = TRUE
+  #   )
+  # )
+
   # ====================== #
   # ---- Hyper Params ----
   # ====================== #
   app_county <- shiny::reactiveValues(
-    value = "Franklin"
+    value = "Mahoning"
   )
   shiny::observe(priority = 999, {
     query <- shiny::parseQueryString(session$clientData$url_search)

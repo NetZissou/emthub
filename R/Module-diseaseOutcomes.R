@@ -1,3 +1,148 @@
+#
+# diseaseOutcomesUI <- function(id) {
+#
+#   bslib::page_fillable(
+#
+#     bslib::layout_columns(
+#
+#       col_widths = c(8, 4),
+#
+#       bslib::card(
+#
+#         bslib::card_body(
+#           class = "p-0",
+#           leaflet::leafletOutput(shiny::NS(id, "index_map"))
+#         ),
+#         full_screen = TRUE
+#       ),
+#
+#       bslib::navset_card_tab(
+#         full_screen = TRUE,
+#         bslib::card_header(
+#           bslib::card_body(
+#             #min_height = 50,
+#             shiny::helpText(
+#               "THIS TOOL ONLY WORKS FOR MAHONING COUNTY. ADDITIONAL COUNTIES WILL BE AVAILABLE SOON. PLEASE CHECK BACK LATER."
+#             )
+#           )
+#         ),
+#
+#         bslib::nav_panel(
+#           'Info',
+#           bslib::card(
+#             bslib::card_body(
+#               min_height = 500,
+#               shiny::selectInput(
+#                 shiny::NS(id, "global_county"),
+#                 label = "Select County",
+#                 choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
+#                 multiple = TRUE,
+#                 selected = NULL,
+#                 width = "100%"
+#               ),
+#               shiny::htmlOutput(shiny::NS(id, "index_map_info"))
+#             )
+#           )
+#         ),
+#         bslib::nav_panel(
+#           'Places',
+#
+#
+#
+#           shiny::fluidRow(
+#             shiny::column(
+#               width = 6,
+#               shiny::selectInput(
+#                 inputId = shiny::NS(id, "filter_type"),
+#                 label = "Type",
+#                 choices = emthub::FILTER_TYPE_CHOICES,
+#                 multiple = TRUE,
+#                 width = "100%"
+#               )
+#             ),
+#             shiny::column(
+#               width = 6,
+#               shiny::selectInput(
+#                 inputId = shiny::NS(id, "filter_city"),
+#                 label = "City",
+#                 choices = emthub::FILTER_CITY_CHOICES,
+#                 multiple = TRUE,
+#                 width = "100%"
+#               )
+#             )
+#           ),
+#
+#
+#           shiny::fluidRow(
+#             shiny::column(
+#               width = 6,
+#               shiny::selectInput(
+#                 inputId = shiny::NS(id, "filter_ct"),
+#                 label = "Census Tract",
+#                 choices = emthub::FILTER_CT_CHOICES,
+#                 multiple = TRUE,
+#                 width = "100%"
+#               )
+#             ),
+#             shiny::column(
+#               width = 6,
+#               shiny::selectInput(
+#                 inputId = shiny::NS(id, "filter_zip"),
+#                 label = "Zip",
+#                 choices = emthub::FILTER_ZIP_CHOICES,
+#                 multiple = TRUE,
+#                 width = "100%"
+#               )
+#             )
+#           ),
+#
+#           reactable_searchBar(shiny::NS(id, "business_table"), placeholder = "Search for Place of Interest ..."),
+#           reactable_csvDownloadButton(shiny::NS(id, "business_table"), filename = "poi_disease_outcomes.csv"),
+#           shiny::helpText("Toggle to add places to the map"),
+#           reactable::reactableOutput(shiny::NS(id, "business_table"))
+#         ),
+#
+#         bslib::nav_panel(
+#           "Accessibility",
+#
+#           bslib::card(
+#             height = 500,
+#
+#             shiny::selectInput(
+#               inputId = shiny::NS(id, "filter_acc_type"),
+#               label = "Business Type",
+#               choices = emthub::ACC_BUSINESS_TYPE,
+#               multiple = FALSE,
+#               width = "100%"
+#             ),
+#
+#             shiny::selectInput(
+#               inputId = shiny::NS(id, "filter_transportation_method"),
+#               label = "Transportation Methods",
+#               choices = emthub::ACC_TRANSPORTATION_METHODS,
+#               multiple = FALSE,
+#               width = "100%"
+#             ),
+#
+#             shiny::actionButton(
+#               inputId = shiny::NS(id, "apply_filter_acc"),
+#               label = "Apply Filters"
+#             )
+#           )
+#
+#
+#         )
+#
+#       )
+#
+#     )
+#   )
+# }
+
+
+
+
+
 diseaseOutcomesUI <- function(id) {
   bslib::navset_card_tab(
     title = NULL,
@@ -13,114 +158,145 @@ diseaseOutcomesUI <- function(id) {
           ),
           full_screen = TRUE
         ),
-        bslib::card(
-          full_screen = TRUE,
-          bslib::navset_pill(
-            bslib::nav_panel(
-              'Info',
-              bslib::card(
-                bslib::card_body(
-                  min_height = 500,
-                  shiny::selectInput(
-                    shiny::NS(id, "global_county"),
-                    label = "Select County",
-                    choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
-                    multiple = TRUE,
-                    selected = NULL,
-                    width = "100%"
-                  ),
-                  shiny::htmlOutput(shiny::NS(id, "index_map_info"))
-                )
+        bslib::navset_card_tab(
+          title = NULL,
+          bslib::card_header(
+            bslib::card_body(
+              #min_height = 20,
+              shiny::helpText(
+                "THIS TOOL ONLY WORKS FOR MAHONING COUNTY. ADDITIONAL COUNTIES WILL BE AVAILABLE SOON. PLEASE CHECK BACK LATER."
               )
-            ),
-            bslib::nav_panel(
-              'Places',
-
-
-
-              shiny::fluidRow(
-                shiny::column(
-                  width = 6,
-                  shiny::selectInput(
-                    inputId = shiny::NS(id, "filter_type"),
-                    label = "Type",
-                    choices = emthub::FILTER_TYPE_CHOICES,
-                    multiple = TRUE,
-                    width = "100%"
-                  )
-                ),
-                shiny::column(
-                  width = 6,
-                  shiny::selectInput(
-                    inputId = shiny::NS(id, "filter_city"),
-                    label = "City",
-                    choices = emthub::FILTER_CITY_CHOICES,
-                    multiple = TRUE,
-                    width = "100%"
-                  )
-                )
-              ),
-
-
-              shiny::fluidRow(
-                shiny::column(
-                  width = 6,
-                  shiny::selectInput(
-                    inputId = shiny::NS(id, "filter_ct"),
-                    label = "Census Tract",
-                    choices = emthub::FILTER_CT_CHOICES,
-                    multiple = TRUE,
-                    width = "100%"
-                  )
-                ),
-                shiny::column(
-                  width = 6,
-                  shiny::selectInput(
-                    inputId = shiny::NS(id, "filter_zip"),
-                    label = "Zip",
-                    choices = emthub::FILTER_ZIP_CHOICES,
-                    multiple = TRUE,
-                    width = "100%"
-                  )
-                )
-              ),
-
-              reactable_searchBar(shiny::NS(id, "business_table"), placeholder = "Search for Place of Interest ..."),
-              reactable_csvDownloadButton(shiny::NS(id, "business_table"), filename = "poi_disease_outcomes.csv"),
-              shiny::helpText("Toggle to add places to the map"),
-              reactable::reactableOutput(shiny::NS(id, "business_table"))
-            ),
-
-            bslib::nav_panel(
-              "Accessibility",
-
-              bslib::card(
-                height = 500,
-
-                shiny::selectInput(
-                  inputId = shiny::NS(id, "filter_acc_type"),
-                  label = "Business Type",
-                  choices = emthub::ACC_BUSINESS_TYPE,
-                  multiple = FALSE,
-                  width = "100%"
-                ),
-
-                shiny::selectInput(
-                  inputId = shiny::NS(id, "filter_transportation_method"),
-                  label = "Transportation Methods",
-                  choices = emthub::ACC_TRANSPORTATION_METHODS,
-                  multiple = FALSE,
-                  width = "100%"
-                ),
-
-                shiny::actionButton(
-                  inputId = shiny::NS(id, "apply_filter_acc"),
-                  label = "Apply Filters"
-                )
-              )
-
-
             )
+          ),
+          bslib::nav_panel(
+            'Info',
+            shiny::selectInput(
+              shiny::NS(id, "global_county"),
+              label = "Select County",
+              choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
+              multiple = TRUE,
+              selected = NULL,
+              width = "100%"
+            ),
+            shiny::htmlOutput(shiny::NS(id, "index_map_info"))
+            # bslib::card(
+            #   bslib::card_body(
+            #     min_height = 500,
+            #     shiny::selectInput(
+            #       shiny::NS(id, "global_county"),
+            #       label = "Select County",
+            #       choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
+            #       multiple = TRUE,
+            #       selected = NULL,
+            #       width = "100%"
+            #     ),
+            #     shiny::htmlOutput(shiny::NS(id, "index_map_info"))
+            #   )
+            # )
+          ),
+          bslib::nav_panel(
+            'Places',
+
+            shiny::fluidRow(
+              shiny::column(
+                width = 6,
+                shiny::selectInput(
+                  inputId = shiny::NS(id, "filter_type"),
+                  label = "Type",
+                  choices = emthub::FILTER_TYPE_CHOICES,
+                  multiple = TRUE,
+                  width = "100%"
+                )
+              ),
+              shiny::column(
+                width = 6,
+                shiny::selectInput(
+                  inputId = shiny::NS(id, "filter_city"),
+                  label = "City",
+                  choices = emthub::FILTER_CITY_CHOICES,
+                  multiple = TRUE,
+                  width = "100%"
+                )
+              )
+            ),
+
+
+            shiny::fluidRow(
+              shiny::column(
+                width = 6,
+                shiny::selectInput(
+                  inputId = shiny::NS(id, "filter_ct"),
+                  label = "Census Tract",
+                  choices = emthub::FILTER_CT_CHOICES,
+                  multiple = TRUE,
+                  width = "100%"
+                )
+              ),
+              shiny::column(
+                width = 6,
+                shiny::selectInput(
+                  inputId = shiny::NS(id, "filter_zip"),
+                  label = "Zip",
+                  choices = emthub::FILTER_ZIP_CHOICES,
+                  multiple = TRUE,
+                  width = "100%"
+                )
+              )
+            ),
+
+            reactable_searchBar(shiny::NS(id, "business_table"), placeholder = "Search for Place of Interest ..."),
+            reactable_csvDownloadButton(shiny::NS(id, "business_table"), filename = "poi_disease_outcomes.csv"),
+            shiny::helpText("Toggle to add places to the map"),
+            reactable::reactableOutput(shiny::NS(id, "business_table"), inline = TRUE)
+          ),
+
+          bslib::nav_panel(
+            "Accessibility",
+            shiny::selectInput(
+              inputId = shiny::NS(id, "filter_acc_type"),
+              label = "Business Type",
+              choices = emthub::ACC_BUSINESS_TYPE,
+              multiple = FALSE,
+              width = "100%"
+            ),
+
+            shiny::selectInput(
+              inputId = shiny::NS(id, "filter_transportation_method"),
+              label = "Transportation Methods",
+              choices = emthub::ACC_TRANSPORTATION_METHODS,
+              multiple = FALSE,
+              width = "100%"
+            ),
+
+            shiny::actionButton(
+              inputId = shiny::NS(id, "apply_filter_acc"),
+              label = "Apply Filters"
+            )
+
+            # bslib::card(
+            #   height = 500,
+            #
+            #   shiny::selectInput(
+            #     inputId = shiny::NS(id, "filter_acc_type"),
+            #     label = "Business Type",
+            #     choices = emthub::ACC_BUSINESS_TYPE,
+            #     multiple = FALSE,
+            #     width = "100%"
+            #   ),
+            #
+            #   shiny::selectInput(
+            #     inputId = shiny::NS(id, "filter_transportation_method"),
+            #     label = "Transportation Methods",
+            #     choices = emthub::ACC_TRANSPORTATION_METHODS,
+            #     multiple = FALSE,
+            #     width = "100%"
+            #   ),
+            #
+            #   shiny::actionButton(
+            #     inputId = shiny::NS(id, "apply_filter_acc"),
+            #     label = "Apply Filters"
+            #   )
+            # )
           )
         ),
         col_widths = c(8,4)
