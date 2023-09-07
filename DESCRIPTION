@@ -61,3 +61,7 @@ Depends:
 LazyData: true
 Remotes: 
     statnmap/HatchedPolygons
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr
