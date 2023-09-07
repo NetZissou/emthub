@@ -40,7 +40,7 @@ server <- function(input, output, session) {
   # ---- Hyper Params ----
   # ====================== #
   app_county <- shiny::reactiveValues(
-    value = "Franklin"
+    value = "Mahoning"
   )
   shiny::observe(priority = 999, {
     query <- shiny::parseQueryString(session$clientData$url_search)
