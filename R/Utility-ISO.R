@@ -127,9 +127,11 @@ addISO <- function(
     geocoding_result <-
       tidygeocoder::geo_combine(
         queries = list(
+          list(method = "iq"),
+          list(method = "here"),
+          list(method = "geocodio"),
           list(method = "osm"),
-          list(method = "census"),
-          list(method = "iq")
+          list(method = "census")
         ),
         global_params = list(address = 'address'),
         address = full_address,
@@ -148,14 +150,18 @@ addISO <- function(
   # ============= #
   # ---- ISO ----
   # ============= #
-  iso_result <-
-    get_iso(
-      location = location,
-      range = range,
-      range_type = range_type,
-      type = type
-    )
-
+  tryCatch({
+    iso_result <-
+      get_iso(
+        location = location,
+        range = range,
+        range_type = range_type,
+        type = type
+      )
+  }, error = function(e) {
+    shiny::showNotification("Failed to generate Isochron. Please click the location on the map and try again.", type = "error")
+    print(e)
+  })
   # =========================== #
   # ---- Meta Data for Map ----
   # =========================== #
