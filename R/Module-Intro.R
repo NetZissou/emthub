@@ -32,7 +32,9 @@ get_intro_content <- function(popup = FALSE) {
 
       shiny::tags$p(
         style = "font-weight: bold;",
-        'If this is your first time on this site, then please watch the training video (click here) and review the "Data Sources" tab prior to using the information on this website. If you are part of or connected to a Pathways HUB in Ohio, then please enroll in the EMT Training Program and complete at least one of the courses in the training program before using this tool in your daily work as a CHW, CHW supervisor, of HUB staff.'
+        shiny::HTML(
+          'If this is your first time on this site, then please watch the training video (<a href="https://osu.zoom.us/rec/play/Dq4VO5rhKXRbpyulrWnmFt3yBKeqgFh20Gi0008bP3VE-PUwWKt_kqVtJ6Wv_Zkjd5-LaHK9giHSfJ55.o9_y7Z57ID2U7B8C?canPlayFromShare=true&from=share_recording_detail&continueMode=true&componentName=rec-play&originRequestUrl=https%3A%2F%2Fosu.zoom.us%2Frec%2Fshare%2FhD9wChINsoQ0Ft99WGXXXq7idIpb3PiBBoaXPubCfmY8aBcDwi1o6_vtcsCn1Pj-.wAXUIoWYEykvaTe4" target="_blank">click here</a>) and review the "Data Sources" tab prior to using the information on this website. If you are part of or connected to a Pathways HUB in Ohio, then please enroll in the EMT Training Program and complete at least one of the courses in the training program before using this tool in your daily work as a CHW, CHW supervisor, of HUB staff.'
+        )
       ),
 
       shiny::tags$br(),
