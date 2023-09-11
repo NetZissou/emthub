@@ -541,12 +541,22 @@ get_point_of_interest <- function(parquet = FALSE) {
   }
 
   # dplyr::mutate(
+  #   full_addr = glue::glue(
+  #     "{name}, {street}, {city}, {zip}",
+  #     name = .data$Company,
+  #     street = .data$`Address Line 1`,
+  #     city = .data$City,
+  #     zip = .data$Zipcode
+  #   ),
+  #   full_addr = stringr::str_remove(.data$full_addr, "^NA, "),
+  #   coded_addr = urltools::url_encode(.data$full_addr),
   #   popup = glue::glue(
   #     "
   #   <h6>{name}</h6></hr>
   #   <b>Type: </b>{type}</br>
   #   <b>Hub: </b>{hub}</br>
-  #   <b>Addr: </b>{street_addr}, {city}, {county}, {zip}
+  #   <b>Addr: </b>{street_addr}, {city}, {county}, {zip}</br>
+  #   <a href='https://www.google.com/maps/search/?api=1&query={coded_addr}' target='_blank'>Open in Google Maps</a>
   #   ",
   #     name = .data$Company,
   #     type = .data$Type,
@@ -554,9 +564,14 @@ get_point_of_interest <- function(parquet = FALSE) {
   #     city = .data$City,
   #     county = .data$county,
   #     zip = .data$Zipcode,
-  #     hub = .data$hub
+  #     hub = .data$hub,
+  #     coded_addr = .data$coded_addr
   #   )
   # ) %>%
+  #   dplyr::select(
+  #     -full_addr,
+  #     -coded_addr
+  #   ) %>%
   # readr::write_csv(
   #   fs::path(
   #     emthub::ROOT,
@@ -629,6 +644,15 @@ update_vax_provider <- function() {
     ) %>%
     dplyr::mutate(
       Census_Tract = as.character(.data$Census_Tract),
+      full_addr = glue::glue(
+        "{name}, {street}, {city}, {zip}",
+        name = .data$Place_Name,
+        street = .data$Address,
+        city = .data$City,
+        zip = .data$Zip
+      ),
+      full_addr = stringr::str_remove(.data$full_addr, "^NA, "),
+      coded_addr = urltools::url_encode(.data$full_addr),
       popup = glue::glue(
         "
         <h6><a href='{website}' target='_blank'>{name}</a></h6></hr>
@@ -637,6 +661,7 @@ update_vax_provider <- function() {
         <b>Addr: </b>{street_addr}, {city}, {county}, {zip} </br>
         <b>Hub: </b>{hub}</br>
         <b><a href='{prescreening_site}' target='_blank'>Prescreening</a></b></br>
+        <b><a href='https://www.google.com/maps/search/?api=1&query={coded_addr}' target='_blank'>Open in Google Maps</a><b>
         ",
         name = .data$Place_Name,
         type = .data$vax_type_full,
@@ -647,10 +672,11 @@ update_vax_provider <- function() {
         city = .data$City,
         county = .data$County,
         zip = .data$Zip,
-        hub = .data$Hub
+        hub = .data$Hub,
+        coded_addr =.data$coded_addr
       )
     ) %>%
-    dplyr::select(-.data$vax_type_full)
+    dplyr::select(-.data$vax_type_full, -.data$full_addr, -.data$coded_addr)
 
   # =============== #
   # ---- Write ----
