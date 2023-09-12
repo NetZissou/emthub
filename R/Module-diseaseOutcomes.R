@@ -614,8 +614,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
 
           label = ~ paste0(
             "<b>", GEOID, "</b>", "</br>",
-            round(weighted_score_scaled, 4), "</br>",
-            "weight"
+            round(weighted_score_scaled, 4), "</br>"
           ) %>% lapply(htmltools::HTML),
 
           labelOptions = leaflet::labelOptions(

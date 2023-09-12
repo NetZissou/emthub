@@ -197,6 +197,15 @@ equityMapUI <- function(id) {
 
           shiny::fluidRow(
             shiny::column(
+              width = 3,
+              shiny::selectInput(
+                shiny::NS(id, "iso_type"),
+                label = "Transportation",
+                choices = c("car", "walk", "transit", "cycle"),
+                multiple = FALSE
+              )
+            ),
+            shiny::column(
               width = 4,
               shiny::selectInput(
                 shiny::NS(id, "iso_range_type"),
@@ -211,15 +220,6 @@ equityMapUI <- function(id) {
                 shiny::NS(id, "iso_range"),
                 label = "Range (min/km)",
                 value = 5
-              )
-            ),
-            shiny::column(
-              width = 3,
-              shiny::selectInput(
-                shiny::NS(id, "iso_type"),
-                label = "Transportation",
-                choices = c("car", "walk", "cycle"),
-                multiple = FALSE
               )
             )
           ),
@@ -302,6 +302,30 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
     pal_vax_provider_travel_time_by_transit <-
       emthub::PAL$pal_vax_provider_travel_time_by_transit
+
+    # ================= #
+    # ---- Control ----
+    # ================= #
+
+    shiny::observe({
+      shiny::req(!rlang::is_empty(input$iso_type))
+
+      if (input$iso_type == "transit") {
+        shiny::updateSelectInput(
+          inputId = "iso_range_type",
+          choices = "time",
+          selected = "time"
+        )
+      } else {
+        shiny::updateSelectInput(
+          inputId = "iso_range_type",
+          choices = c("distance", "time"),
+          selected = NULL
+        )
+      }
+    }) %>%
+      shiny::bindEvent(input$iso_type)
+
 
     # ======================= #
     # ---- Reset Filters ----

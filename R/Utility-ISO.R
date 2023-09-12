@@ -2,15 +2,25 @@ get_iso <- function(
   location = c(),
   range = c(),
   range_type = c("distance", "time"),
-  type = c("car", "walk", "cycle")
+  type = c("car", "walk", "transit", "cycle")
 ) {
 
   type <- switch(
     type,
     "car"= "driving-car",
     "walk"= "foot-walking",
-    "cycle"= "cycling-regular"
+    "cycle"= "cycling-regular",
+    "transit" = "transit"
   )
+
+  if (type == "transit") {
+    return(
+      get_iso_transit(
+        location = location,
+        range = range
+      )
+    )
+  }
 
   # Set the request URL and payload data
   url <- glue::glue(
@@ -57,6 +67,38 @@ get_iso <- function(
       #geojson = httr2::resp_body_json(resp)$features
     )
   )
+}
+
+
+get_iso_transit <- function(
+  location = c(),
+  range
+) {
+
+
+  url <- glue::glue(
+    "https://api.geoapify.com/v1/isoline?lat={lat}&lon={lon}&type=time&mode=approximated_transit&range={range}&apiKey={apiKey}",
+    lat = location[2],
+    lon = location[1],
+    range = range,
+    apiKey = emthub::TOKENS$geoapify
+  )
+
+  resp <-
+    httr2::request(url) %>%
+    httr2::req_perform()
+
+  return(
+    list(
+      location = location,
+      range = range,
+      range_type = "time",
+      type = "transit",
+      sf = sf::read_sf(httr2::resp_body_string(resp))
+      #geojson = httr2::resp_body_json(resp)$features
+    )
+  )
+
 }
 
 
@@ -212,7 +254,8 @@ addISO <- function(
       type,
       "car"= "car",
       "walk"= "walking",
-      "cycle"= "bicycle"
+      "cycle"= "bicycle",
+      "transit" = "bus"
     )
 
     leaflet::makeAwesomeIcon(
