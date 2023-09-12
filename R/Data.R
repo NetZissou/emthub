@@ -644,14 +644,24 @@ update_vax_provider <- function() {
     ) %>%
     dplyr::mutate(
       Census_Tract = as.character(.data$Census_Tract),
+      name_clean = stringr::str_remove(
+        .data$Place_Name, "\\s*#\\w+\\s*"
+      ),
+      name_clean = dplyr::case_when(
+        stringr::str_detect(.data$name_clean, "Walgreens") ~ "Walgreens",
+        TRUE ~ .data$name_clean
+      ),
       full_addr = glue::glue(
         "{name}, {street}, {city}, {zip}",
-        name = .data$Place_Name,
+        name = .data$name_clean,
         street = .data$Address,
         city = .data$City,
         zip = .data$Zip
       ),
       full_addr = stringr::str_remove(.data$full_addr, "^NA, "),
+      full_addr = stringr::str_remove(
+        .data$full_addr, "\\s*#\\w+\\s*"
+      ),
       coded_addr = urltools::url_encode(.data$full_addr),
       popup = glue::glue(
         "
@@ -676,7 +686,7 @@ update_vax_provider <- function() {
         coded_addr =.data$coded_addr
       )
     ) %>%
-    dplyr::select(-.data$vax_type_full, -.data$full_addr, -.data$coded_addr)
+    dplyr::select(-.data$vax_type_full, -.data$full_addr, -.data$coded_addr, -.data$name_clean)
 
   # =============== #
   # ---- Write ----
