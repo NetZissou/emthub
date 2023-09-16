@@ -1,147 +1,3 @@
-#
-# diseaseOutcomesUI <- function(id) {
-#
-#   bslib::page_fillable(
-#
-#     bslib::layout_columns(
-#
-#       col_widths = c(8, 4),
-#
-#       bslib::card(
-#
-#         bslib::card_body(
-#           class = "p-0",
-#           leaflet::leafletOutput(shiny::NS(id, "index_map"))
-#         ),
-#         full_screen = TRUE
-#       ),
-#
-#       bslib::navset_card_tab(
-#         full_screen = TRUE,
-#         bslib::card_header(
-#           bslib::card_body(
-#             #min_height = 50,
-#             shiny::helpText(
-#               "THIS TOOL ONLY WORKS FOR MAHONING COUNTY. ADDITIONAL COUNTIES WILL BE AVAILABLE SOON. PLEASE CHECK BACK LATER."
-#             )
-#           )
-#         ),
-#
-#         bslib::nav_panel(
-#           'Info',
-#           bslib::card(
-#             bslib::card_body(
-#               min_height = 500,
-#               shiny::selectInput(
-#                 shiny::NS(id, "global_county"),
-#                 label = "Select County",
-#                 choices = emthub::EQUITY_MAP_FILTER_CHOICES$county,
-#                 multiple = TRUE,
-#                 selected = NULL,
-#                 width = "100%"
-#               ),
-#               shiny::htmlOutput(shiny::NS(id, "index_map_info"))
-#             )
-#           )
-#         ),
-#         bslib::nav_panel(
-#           'Places',
-#
-#
-#
-#           shiny::fluidRow(
-#             shiny::column(
-#               width = 6,
-#               shiny::selectInput(
-#                 inputId = shiny::NS(id, "filter_type"),
-#                 label = "Type",
-#                 choices = emthub::FILTER_TYPE_CHOICES,
-#                 multiple = TRUE,
-#                 width = "100%"
-#               )
-#             ),
-#             shiny::column(
-#               width = 6,
-#               shiny::selectInput(
-#                 inputId = shiny::NS(id, "filter_city"),
-#                 label = "City",
-#                 choices = emthub::FILTER_CITY_CHOICES,
-#                 multiple = TRUE,
-#                 width = "100%"
-#               )
-#             )
-#           ),
-#
-#
-#           shiny::fluidRow(
-#             shiny::column(
-#               width = 6,
-#               shiny::selectInput(
-#                 inputId = shiny::NS(id, "filter_ct"),
-#                 label = "Census Tract",
-#                 choices = emthub::FILTER_CT_CHOICES,
-#                 multiple = TRUE,
-#                 width = "100%"
-#               )
-#             ),
-#             shiny::column(
-#               width = 6,
-#               shiny::selectInput(
-#                 inputId = shiny::NS(id, "filter_zip"),
-#                 label = "Zip",
-#                 choices = emthub::FILTER_ZIP_CHOICES,
-#                 multiple = TRUE,
-#                 width = "100%"
-#               )
-#             )
-#           ),
-#
-#           reactable_searchBar(shiny::NS(id, "business_table"), placeholder = "Search for Place of Interest ..."),
-#           reactable_csvDownloadButton(shiny::NS(id, "business_table"), filename = "poi_disease_outcomes.csv"),
-#           shiny::helpText("Toggle to add places to the map"),
-#           reactable::reactableOutput(shiny::NS(id, "business_table"))
-#         ),
-#
-#         bslib::nav_panel(
-#           "Accessibility",
-#
-#           bslib::card(
-#             height = 500,
-#
-#             shiny::selectInput(
-#               inputId = shiny::NS(id, "filter_acc_type"),
-#               label = "Business Type",
-#               choices = emthub::ACC_BUSINESS_TYPE,
-#               multiple = FALSE,
-#               width = "100%"
-#             ),
-#
-#             shiny::selectInput(
-#               inputId = shiny::NS(id, "filter_transportation_method"),
-#               label = "Transportation Methods",
-#               choices = emthub::ACC_TRANSPORTATION_METHODS,
-#               multiple = FALSE,
-#               width = "100%"
-#             ),
-#
-#             shiny::actionButton(
-#               inputId = shiny::NS(id, "apply_filter_acc"),
-#               label = "Apply Filters"
-#             )
-#           )
-#
-#
-#         )
-#
-#       )
-#
-#     )
-#   )
-# }
-
-
-
-
 
 diseaseOutcomesUI <- function(id) {
   bslib::navset_card_tab(
@@ -342,6 +198,7 @@ diseaseOutcomesUI <- function(id) {
 diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_list) {
 
   shiny::moduleServer(id, function(input, output, session){
+
 
     # ============== #
     # ---- Data ----
@@ -609,11 +466,9 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
             dplyr::select(
               .data$GEOID,
               dplyr::all_of(
-                emthub::DISEASE_DATA_VARS
-                # stringr::str_c(
-                #   "rank_",
-                #   tier_list
-                # )
+                #emthub::DISEASE_DATA_VARS,
+                # TODO: Fix
+                tier_list
               )
             ) %>%
             tidyr::pivot_longer(
@@ -740,7 +595,6 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           weighted_score_scaled = ifelse(is.nan(.data$weighted_score_scaled), NA, .data$weighted_score_scaled)
         )
 
-
       leaflet::leafletProxy("index_map") %>%
         leaflet.extras2::addSpinner() %>%
         leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
@@ -759,7 +613,8 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           #options = leaflet::pathOptions(pane = "County_districts_polyline"),
 
           label = ~ paste0(
-            "<b>", GEOID, "</b>", "</br>", round(weighted_score_scaled, 4)
+            "<b>", GEOID, "</b>", "</br>",
+            round(weighted_score_scaled, 4), "</br>"
           ) %>% lapply(htmltools::HTML),
 
           labelOptions = leaflet::labelOptions(
@@ -791,26 +646,32 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     }
 
 
-    shiny::observeEvent(input$rank_list_1, {
+    # shiny::observeEvent(input$rank_list_1, {
+    #   updateWeights()
+    #   updateTierScore()
+    #
+    # })
+    #
+    # shiny::observeEvent(input$rank_list_2, {
+    #   updateWeights()
+    #   updateTierScore()
+    # })
+    #
+    # shiny::observeEvent(input$rank_list_3, {
+    #   updateWeights()
+    #   updateTierScore()
+    #
+    # })
+
+    shiny::observe({
       updateWeights()
       updateTierScore()
-
-      #print(tier_score_tbl$value)
-    })
-
-    shiny::observeEvent(input$rank_list_2, {
-      updateWeights()
-      updateTierScore()
-
-      #print(tier_score_tbl$value)
-    })
-
-    shiny::observeEvent(input$rank_list_3, {
-      updateWeights()
-      updateTierScore()
-
-      #print(tier_score_tbl$value)
-    })
+    }) %>%
+      shiny::bindEvent(
+        input$rank_list_1,
+        input$rank_list_2,
+        input$rank_list_3
+      )
 
 
 
@@ -1171,7 +1032,13 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           dplyr::mutate(
             html_output = glue::glue(
               '<h5>{disease}: {disease_rank}/{n}</h5><meter value="{disease_rank}" min="0" max="{n}"></meter>',
-              disease = stringr::str_remove(.data$disease, "rank_"),
+              disease = stringr::str_to_title(
+                stringr::str_replace_all(
+                  stringr::str_remove(.data$disease, "rank_"),
+                  pattern = "\\.",
+                  replacement = " "
+                )
+              ),
               disease_rank = .data$rank,
               n = n_total
             )

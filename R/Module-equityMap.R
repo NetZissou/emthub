@@ -197,6 +197,15 @@ equityMapUI <- function(id) {
 
           shiny::fluidRow(
             shiny::column(
+              width = 3,
+              shiny::selectInput(
+                shiny::NS(id, "iso_type"),
+                label = "Transportation",
+                choices = c("car", "walk", "transit", "cycle"),
+                multiple = FALSE
+              )
+            ),
+            shiny::column(
               width = 4,
               shiny::selectInput(
                 shiny::NS(id, "iso_range_type"),
@@ -211,15 +220,6 @@ equityMapUI <- function(id) {
                 shiny::NS(id, "iso_range"),
                 label = "Range (min/km)",
                 value = 5
-              )
-            ),
-            shiny::column(
-              width = 3,
-              shiny::selectInput(
-                shiny::NS(id, "iso_type"),
-                label = "Transportation",
-                choices = c("car", "walk", "cycle"),
-                multiple = FALSE
               )
             )
           ),
@@ -302,6 +302,30 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
     pal_vax_provider_travel_time_by_transit <-
       emthub::PAL$pal_vax_provider_travel_time_by_transit
+
+    # ================= #
+    # ---- Control ----
+    # ================= #
+
+    shiny::observe({
+      shiny::req(!rlang::is_empty(input$iso_type))
+
+      if (input$iso_type == "transit") {
+        shiny::updateSelectInput(
+          inputId = "iso_range_type",
+          choices = "time",
+          selected = "time"
+        )
+      } else {
+        shiny::updateSelectInput(
+          inputId = "iso_range_type",
+          choices = c("distance", "time"),
+          selected = NULL
+        )
+      }
+    }) %>%
+      shiny::bindEvent(input$iso_type)
+
 
     # ======================= #
     # ---- Reset Filters ----
@@ -1050,7 +1074,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       shiny::req(!rlang::is_empty(poi_reactive$filtered))
 
       poi_reactive$filtered %>%
-        dplyr::arrange(.data$Company) %>%
+        #dplyr::arrange(.data$Company) %>%
         dplyr::select(
           Name = .data$Company,
           Type = .data$Type,
@@ -1081,54 +1105,58 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
 
     selected_poi_index <- shiny::reactive(reactable::getReactableState("poi_table", "selected"))
     selected_poi <- shiny::reactiveValues(value = NULL)
+
+
     shiny::observe({
 
-      if (!is.null(selected_poi_index())) {
+      tryCatch({
+        if (!is.null(selected_poi_index())) {
 
-        selected_poi$value <-
-          poi_reactive$filtered[selected_poi_index(),] %>%
-          dplyr::collect()
-
-
-      } else {
-        selected_poi$value <- NULL
-      }
+          selected_poi$value <-
+            poi_reactive$filtered[selected_poi_index(),] %>%
+            dplyr::collect()
 
 
-      if (!rlang::is_empty(selected_poi$value)) {
+        } else {
+          selected_poi$value <- NULL
+        }
 
-        leaflet::leafletProxy("equity_map") %>%
-          leaflet.extras2::addSpinner() %>%
-          leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
-          leaflet::clearGroup("Point of Interest") %>%
-          leaflet::addAwesomeMarkers(
-            data = selected_poi$value,
-            group = "Point of Interest",
-            lng = ~Longitude, lat = ~Latitude,
-            icon = leaflet::makeAwesomeIcon(
-              text = fontawesome::fa("location-crosshairs"),
-              iconColor = 'white',
-              markerColor = "black"
-            ),
-            popup = ~popup,
-            clusterOptions = leaflet::markerClusterOptions(),
-            clusterId = "vaxCluster",
-            labelOptions = leaflet::labelOptions(
-              style = list(
-                "font-size" = "15px",
-                "font-style" = "bold",
-                "border-color" = "rgba(0,0,0,0.5)"
-              )
-            ),
-            options = leaflet::pathOptions(pane = "layer_top")
-          ) %>%
-          leaflet.extras2::stopSpinner()
 
-      } else {
+        if (!rlang::is_empty(selected_poi$value)) {
 
-        leaflet::leafletProxy("equity_map") %>%
-          leaflet::clearGroup("Point of Interest")
-      }
+          leaflet::leafletProxy("equity_map") %>%
+            leaflet.extras2::addSpinner() %>%
+            leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+            leaflet::clearGroup("Point of Interest") %>%
+            leaflet::addAwesomeMarkers(
+              data = selected_poi$value,
+              group = "Point of Interest",
+              lng = ~Longitude, lat = ~Latitude,
+              icon = leaflet::makeAwesomeIcon(
+                text = fontawesome::fa("location-crosshairs"),
+                iconColor = 'white',
+                markerColor = "black"
+              ),
+              popup = ~popup,
+              clusterOptions = leaflet::markerClusterOptions(),
+              clusterId = "vaxCluster",
+              labelOptions = leaflet::labelOptions(
+                style = list(
+                  "font-size" = "15px",
+                  "font-style" = "bold",
+                  "border-color" = "rgba(0,0,0,0.5)"
+                )
+              ),
+              options = leaflet::pathOptions(pane = "layer_top")
+            ) %>%
+            leaflet.extras2::stopSpinner()
+
+        } else {
+
+          leaflet::leafletProxy("equity_map") %>%
+            leaflet::clearGroup("Point of Interest")
+        }
+      }, error = function(err){print(err)})
 
     })
 
