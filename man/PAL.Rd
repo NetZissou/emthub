@@ -3,7 +3,8 @@
 \docType{data}
 \name{PAL}
 \alias{PAL}
-\title{PAL}
+\title{Store all tokens used in the app
+PAL}
 \format{
 An object of class \code{list} of length 10.
 }
@@ -11,6 +12,7 @@ An object of class \code{list} of length 10.
 PAL
 }
 \description{
+Store all tokens used in the app
 PAL
 }
 \keyword{datasets}

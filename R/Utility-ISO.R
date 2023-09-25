@@ -42,7 +42,7 @@ get_iso <- function(
     httr2::request(url) %>%
     httr2::req_headers(
       Accept = "application/json, application/geo+json, application/gpx+xml, img/png; charset=utf-8",
-      Authorization = emthub::TOKENS$osm,
+      Authorization = Sys.getenv("osm"),
       `Content-Type` = "application/json; charset=utf-8"
     ) %>%
     httr2::req_body_json(body) %>%
@@ -81,7 +81,7 @@ get_iso_transit <- function(
     lat = location[2],
     lon = location[1],
     range = range,
-    apiKey = emthub::TOKENS$geoapify
+    apiKey = Sys.getenv("geoapify")
   )
 
   resp <-
