@@ -33,7 +33,7 @@
 #' BIRTH_OUTCOMES_PAL
 "BIRTH_OUTCOMES_PAL"
 #' Store all tokens used in the app
-"TOKENS"
+# "TOKENS"
 #' PAL
 "PAL"
 #' Data source documentation Mahoning
