@@ -6,12 +6,13 @@ SF_CT <- get_sf_ct()
 SF_COUNTY <- get_sf_county()
 
 vax_provider <- get_vax_provider()
+poi <- get_point_of_interest()
 
 CHOICES_HUB <- sort(unique(SF_HUB$HUB_Name))
 CHOICES_CT <- sort(unique(SF_CT$GEOID))
 CHOICES_COUNTY <- sort(unique(SF_COUNTY$COUNTY))
 
-CHOICES_ZIP <- sort(as.character(unique(SF_ZIP$GEOID10)))
+CHOICES_ZIP <- sort(as.character(unique(SF_ZIP$GEOID20)))
 
 CHOICES_VAX_TYPE <- sort(unique(vax_provider$Vaccine_Type))
 names(CHOICES_VAX_TYPE) <- c(
@@ -22,7 +23,11 @@ names(CHOICES_VAX_TYPE) <- c(
 CHOICES_VAX_CITY <- sort(unique(vax_provider$City))
 
 CHOICES_POINT_OF_INTEREST <-
-  sort(unique(get_point_of_interest()$type))
+  sort(unique(poi$type))
+
+CHOICES_CITY <-
+  sort(unique(poi$city))
+
 names(CHOICES_POINT_OF_INTEREST) <- stringr::str_to_title(
   CHOICES_POINT_OF_INTEREST
 )
@@ -39,6 +44,7 @@ EQUITY_MAP_FILTER_CHOICES <-
     ct = CHOICES_CT,
     county = CHOICES_COUNTY,
     zip = CHOICES_ZIP,
+    city = CHOICES_CITY,
     vax_type = c(
       CHOICES_VAX_TYPE
     ),

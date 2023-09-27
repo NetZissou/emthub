@@ -150,6 +150,28 @@ equityMapUI <- function(id) {
             )
           ),
 
+          shiny::fluidRow(
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_poi_city"),
+                label = "City",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$city,
+                multiple = TRUE
+              )
+            ),
+
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_poi_zip"),
+                label = "Zip",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$zip,
+                multiple = TRUE
+              )
+            )
+          ),
+
           reactable_searchBar(shiny::NS(id, "poi_table"), placeholder = "Search for Place of Interest ..."),
           reactable_csvDownloadButton(shiny::NS(id, "poi_table"), filename = "poi.csv"),
           shiny::helpText("Toggle to add places to the map. If you do not see the table below please click the expand button in the bottom-right corner."),
@@ -252,7 +274,7 @@ equityMapUI <- function(id) {
 
 }
 
-equityMapServer <- function(id, ct_level_data, shapefile_list) {
+equityMapServer <- function(id, poi, ct_level_data, shapefile_list) {
 
   shiny::moduleServer(id, function(input, output, session){
 
@@ -265,7 +287,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     vax_provider_reactive <- shiny::reactiveValues(
       filtered = NULL
     )
-    poi <- get_point_of_interest(parquet = TRUE)
+    #poi <- get_point_of_interest(parquet = TRUE)
     poi_reactive <- shiny::reactiveValues(
       filtered = NULL
     )
@@ -431,7 +453,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       }
     }
 
-    update_poi <- function(types, hubs) {
+    update_poi <- function(types, hubs, cities, zips) {
 
       filtered <- poi
 
@@ -453,7 +475,27 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           )
       }
 
-      if (rlang::is_empty(types) && rlang::is_empty(hubs)) {
+      if (!rlang::is_empty(cities)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$city %in% cities
+          )
+      }
+
+      if (!rlang::is_empty(zips)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$zip %in% zips
+          )
+      }
+
+      if (
+        rlang::is_empty(types) && rlang::is_empty(hubs) && rlang::is_empty(cities) && rlang::is_empty(zips)
+      ) {
         poi_reactive$filtered <- NULL
       } else {
         poi_reactive$filtered <- filtered
@@ -961,7 +1003,9 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     shiny::observe({
       update_poi(
         input$selection_poi_type,
-        input$selection_poi_hub
+        input$selection_poi_hub,
+        input$selection_poi_city,
+        input$selection_poi_zip
       )
     })
 

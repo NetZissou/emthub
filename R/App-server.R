@@ -67,6 +67,8 @@ server <- function(input, output, session) {
   # ============== #
   ct_level_data_all <- get_ct_level_data(parquet = TRUE)
 
+  poi <- get_point_of_interest(parquet = TRUE)
+
   shapefile_list <-
     list(
       SF_HUB = get_sf_hub(parquet = T),
@@ -82,12 +84,18 @@ server <- function(input, output, session) {
 
   diseaseOutcomesServer(
     "disease_outcomes",
+    poi,
     ct_level_data_all,
     app_county,
     shapefile_list
   )
 
-  equityMapServer("equity_map", ct_level_data_all, shapefile_list)
+  equityMapServer(
+    "equity_map",
+    poi,
+    ct_level_data_all,
+    shapefile_list
+  )
 
   dataDocServer("data_doc")
 }
