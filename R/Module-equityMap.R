@@ -431,16 +431,16 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       }
     }
 
-    update_poi <- function(type, hubs) {
+    update_poi <- function(types, hubs) {
 
       filtered <- poi
 
-      if (!rlang::is_empty(type)) {
+      if (!rlang::is_empty(types)) {
 
         filtered <-
           filtered %>%
           dplyr::filter(
-            .data$Type %in% type
+            .data$type %in% types
           )
       }
 
@@ -453,7 +453,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           )
       }
 
-      if (rlang::is_empty(type) && rlang::is_empty(hubs)) {
+      if (rlang::is_empty(types) && rlang::is_empty(hubs)) {
         poi_reactive$filtered <- NULL
       } else {
         poi_reactive$filtered <- filtered
@@ -985,7 +985,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           Address = .data$Address,
           City = .data$City,
           County = .data$County,
-          State = .data$State,
+          #State = .data$State,
           Zip = .data$Zip,
           `Census Tract` = .data$Census_Tract
         ) %>%
@@ -1076,15 +1076,14 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       poi_reactive$filtered %>%
         #dplyr::arrange(.data$Company) %>%
         dplyr::select(
-          Name = .data$Company,
-          Type = .data$Type,
+          Name = .data$name,
+          Type = .data$type,
           Hub = .data$hub,
-          City = .data$City,
+          City = .data$city,
           County = .data$county,
-          State = .data$State,
-          Zip = .data$Zipcode,
+          Zip = .data$zip,
           `Census Tract` = .data$census_tract,
-          Addr = .data$`Address Line 1`
+          Addr = .data$street_addr
         ) %>%
         dplyr::collect() %>%
         reactable::reactable(
@@ -1131,7 +1130,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             leaflet::addAwesomeMarkers(
               data = selected_poi$value,
               group = "Point of Interest",
-              lng = ~Longitude, lat = ~Latitude,
+              lng = ~lng, lat = ~lat,
               icon = leaflet::makeAwesomeIcon(
                 text = fontawesome::fa("location-crosshairs"),
                 iconColor = 'white',
@@ -1331,35 +1330,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             "Hub Service Area"
           )
         ) %>%
-        # leaflet::addEasyButton(leaflet::easyButton(
-        #   position = "bottomleft",
-        #   states = list(
-        #     leaflet::easyButtonState(
-        #       stateName="unfrozen-markers",
-        #       icon="ion-toggle",
-        #       title="Freeze Clusters",
-        #       onClick = leaflet::JS("
-        #   function(btn, map) {
-        #     var clusterManager =
-        #       map.layerManager.getLayer('cluster', 'vaxCluster');
-        #     clusterManager.freezeAtZoom();
-        #     btn.state('frozen-markers');
-        #   }")
-        #     ),
-        #     leaflet::easyButtonState(
-        #       stateName="frozen-markers",
-        #       icon="ion-toggle-filled",
-        #       title="UnFreeze Clusters",
-        #       onClick = leaflet::JS("
-        #   function(btn, map) {
-        #     var clusterManager =
-        #       map.layerManager.getLayer('cluster', 'vaxCluster');
-        #     clusterManager.unfreeze();
-        #     btn.state('unfrozen-markers');
-        #   }")
-        #     )
-        #   )
-        # )) %>%
         leaflet.extras2::addEasyprint(
           options = leaflet.extras2::easyprintOptions(
             title = 'Print Map',

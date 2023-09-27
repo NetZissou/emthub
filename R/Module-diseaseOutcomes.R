@@ -105,55 +105,144 @@ diseaseOutcomesUI <- function(id) {
             shiny::helpText("Toggle to add places to the map"),
             reactable::reactableOutput(shiny::NS(id, "business_table"), inline = TRUE)
           ),
-
           bslib::nav_panel(
-            "Accessibility",
-            shiny::selectInput(
-              inputId = shiny::NS(id, "filter_acc_type"),
-              label = "Business Type",
-              choices = emthub::ACC_BUSINESS_TYPE,
-              multiple = FALSE,
-              width = "100%"
+            title = "Access Tool",
+            shiny::fluidRow(
+              shiny::column(
+                width = 12,
+                shiny::textInput(
+                  shiny::NS(id, "iso_location"),
+                  label = "Full Address",
+                  placeholder = "street, city, state, zip",
+                  width = "100%"
+                ),
+                shiny::textInput(
+                  shiny::NS(id, "iso_label"),
+                  label = "Label",
+                  placeholder = "Label the isochrone, not required",
+                  width = "100%"
+                )
+              )
+            ),
+            shiny::fluidRow(
+              shiny::column(
+                width = 6,
+                shiny::numericInput(
+                  shiny::NS(id, "iso_lat"),
+                  label = "Latitude ",
+                  value = NULL
+                )
+              ),
+              shiny::column(
+                width = 6,
+                shiny::numericInput(
+                  shiny::NS(id, "iso_lng"),
+                  label = "Longitude ",
+                  value = NULL
+                )
+              ),
+              shiny::helpText("Click location on the map to obtain lat, lng. Leave empty if full address is provided.")
             ),
 
-            shiny::selectInput(
-              inputId = shiny::NS(id, "filter_transportation_method"),
-              label = "Transportation Methods",
-              choices = emthub::ACC_TRANSPORTATION_METHODS,
-              multiple = FALSE,
-              width = "100%"
+            shiny::fluidRow(
+              shiny::column(
+                width = 3,
+                shiny::selectInput(
+                  shiny::NS(id, "iso_type"),
+                  label = "Transportation",
+                  choices = c("car", "walk", "transit", "cycle"),
+                  multiple = FALSE
+                )
+              ),
+              shiny::column(
+                width = 4,
+                shiny::selectInput(
+                  shiny::NS(id, "iso_range_type"),
+                  label = "Measurement",
+                  choices = c("distance", "time"),
+                  multiple = FALSE
+                ),
+              ),
+              shiny::column(
+                width = 4,
+                shiny::numericInput(
+                  shiny::NS(id, "iso_range"),
+                  label = "Range (min/km)",
+                  value = 5
+                )
+              )
             ),
 
-            shiny::actionButton(
-              inputId = shiny::NS(id, "apply_filter_acc"),
-              label = "Apply Filters"
+            shiny::fluidRow(
+              shiny::column(
+                width = 6,
+                shiny::actionButton(
+                  shiny::NS(id, "iso_add"),
+                  label = "Add Isochrones",
+                  width = "100%"
+                )
+              ),
+
+              shiny::column(
+                width = 6,
+                shiny::actionButton(
+                  shiny::NS(id, "iso_clear"),
+                  label = "Clear Isochrones",
+                  width = "100%"
+                )
+              )
             )
 
-            # bslib::card(
-            #   height = 500,
-            #
-            #   shiny::selectInput(
-            #     inputId = shiny::NS(id, "filter_acc_type"),
-            #     label = "Business Type",
-            #     choices = emthub::ACC_BUSINESS_TYPE,
-            #     multiple = FALSE,
-            #     width = "100%"
-            #   ),
-            #
-            #   shiny::selectInput(
-            #     inputId = shiny::NS(id, "filter_transportation_method"),
-            #     label = "Transportation Methods",
-            #     choices = emthub::ACC_TRANSPORTATION_METHODS,
-            #     multiple = FALSE,
-            #     width = "100%"
-            #   ),
-            #
-            #   shiny::actionButton(
-            #     inputId = shiny::NS(id, "apply_filter_acc"),
-            #     label = "Apply Filters"
-            #   )
-            # )
           )
+
+          # bslib::nav_panel(
+          #   "Accessibility",
+          #   shiny::selectInput(
+          #     inputId = shiny::NS(id, "filter_acc_type"),
+          #     label = "Business Type",
+          #     choices = emthub::ACC_BUSINESS_TYPE,
+          #     multiple = FALSE,
+          #     width = "100%"
+          #   ),
+          #
+          #   shiny::selectInput(
+          #     inputId = shiny::NS(id, "filter_transportation_method"),
+          #     label = "Transportation Methods",
+          #     choices = emthub::ACC_TRANSPORTATION_METHODS,
+          #     multiple = FALSE,
+          #     width = "100%"
+          #   ),
+          #
+          #   shiny::actionButton(
+          #     inputId = shiny::NS(id, "apply_filter_acc"),
+          #     label = "Apply Filters"
+          #   )
+          #
+          #   # bslib::card(
+          #   #   height = 500,
+          #   #
+          #   #   shiny::selectInput(
+          #   #     inputId = shiny::NS(id, "filter_acc_type"),
+          #   #     label = "Business Type",
+          #   #     choices = emthub::ACC_BUSINESS_TYPE,
+          #   #     multiple = FALSE,
+          #   #     width = "100%"
+          #   #   ),
+          #   #
+          #   #   shiny::selectInput(
+          #   #     inputId = shiny::NS(id, "filter_transportation_method"),
+          #   #     label = "Transportation Methods",
+          #   #     choices = emthub::ACC_TRANSPORTATION_METHODS,
+          #   #     multiple = FALSE,
+          #   #     width = "100%"
+          #   #   ),
+          #   #
+          #   #   shiny::actionButton(
+          #   #     inputId = shiny::NS(id, "apply_filter_acc"),
+          #   #     label = "Apply Filters"
+          #   #   )
+          #   # )
+          # )
         ),
         col_widths = c(8,4)
 
@@ -233,12 +322,12 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         )
       )
 
-      if (app_county$value == "Mahoning") {
-        shinyjs::hide(
-          id = "global_county",
-          anim = FALSE
-        )
-      }
+      # if (app_county$value == "Mahoning") {
+      #   shinyjs::hide(
+      #     id = "global_county",
+      #     anim = FALSE
+      #   )
+      # }
       #print("=======================")
       #print(input$global_county)
     })
@@ -250,14 +339,15 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
       shiny::reactiveValues(
         filtered = NULL
       )
+    vax_provider <- get_vax_provider(parquet = TRUE)
 
     # > Regional Rates
-    ACCESSIBILITY_DATA <- get_acc_data(parquet = TRUE)
-    acc_data <-
-      shiny::reactiveValues(
-        value = NULL,
-        pal = NULL
-      )
+    # ACCESSIBILITY_DATA <- get_acc_data(parquet = TRUE)
+    # acc_data <-
+    #   shiny::reactiveValues(
+    #     value = NULL,
+    #     pal = NULL
+    #   )
 
     ct_level_data <- shiny::reactive({
       shiny::req(!rlang::is_empty(input$global_county))
@@ -288,111 +378,169 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     # ======================= #
     # ---- Event Handler ----
     # ======================= #
-
     # > Accessibility ----
-    updateAcc <-
-      function() {
+    shiny::observeEvent(input$iso_add, {
+      shiny::req(!rlang::is_empty(input$iso_range_type))
 
-        acc_data_filtered <- ACCESSIBILITY_DATA
-
-        if (!rlang::is_empty(input$filter_acc_type)) {
-
-          acc_data_filtered <-
-            acc_data_filtered %>%
-            dplyr::filter(.data$Business_type_condensed == input$filter_acc_type)
-        }
-
-        if (!rlang::is_empty(input$filter_transportation_method)) {
-
-          acc_data_filtered <-
-            acc_data_filtered %>%
-            dplyr::transmute(
-              .data$censustract,
-              .data$Business_type_condensed,
-              value = .data[[input$filter_transportation_method]],
-              value_fct = emthub::ACC_PARAM_LIST$case[[input$filter_transportation_method]](.data$value)
-            )
-        }
-
-        acc_data$value <- acc_data_filtered
-        acc_data$pal <-
-          leaflet::colorFactor(
-            palette = emthub::ACC_PARAM_LIST$color[[input$filter_transportation_method]],
-            # domain = factor(
-            #   emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]],
-            #   levels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]]
-            # ),
-            domain = emthub::ACC_PARAM_LIST$level_n[[input$filter_transportation_method]]
-            #levels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]],
-            #ordered = TRUE
-          )
-
-
-
-        leaflet::leafletProxy("index_map") %>%
-          leaflet.extras2::addSpinner() %>%
-          leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
-          leaflet::clearGroup(group = "Accessibility") %>%
-          leaflet::removeControl(layerId = "acc_legend") %>%
-          leaflet::addPolygons(
-            data = acc_data$value,
-            group = "Accessibility",
-            stroke = TRUE,
-            color = ~acc_data$pal(value_fct),
-            weight = 1,
-            #opacity = 0.8,
-            dashArray = "3",
-            fillOpacity = 0.8,
-            #options = leaflet::pathOptions(pane = "County_districts_polyline"),
-
-            label = ~ paste0(
-              "<b>", censustract, "</b>", "</br>", value, " mins"
-            ) %>% lapply(htmltools::HTML),
-
-            labelOptions = leaflet::labelOptions(
-              style = list(
-                "font-weight" = "normal",
-                padding = "3px 8px"
-              ),
-              textsize = "15px",
-              direction = "auto"
-            ),
-
-            highlight = leaflet::highlightOptions(
-              weight = 3,
-              fillOpacity = 0.1,
-              color = "black",
-              dashArray = "",
-              opacity = 0.5,
-              bringToFront = TRUE,
-              sendToBack = TRUE
-            ),
-
-            # TODO: Process Layer ID
-            layerId = ~paste0("acc_", censustract),
-            options = leaflet::pathOptions(pane = "layer_bottom")
-          ) %>%
-          leaflet::addLegend(
-            "bottomleft",
-            group = "Accessibility",
-            layerId = "acc_legend",
-            data = acc_data$value,
-            #pal = acc_data$pal,
-            colors = emthub::ACC_PARAM_LIST$color[[input$filter_transportation_method]],
-            values = ~value_fct,
-            title = emthub::ACC_PARAM_LIST$legend_title[[input$filter_transportation_method]],
-            opacity = 1,
-            labels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]]
-            #labFormat = leaflet::labelFormat(suffix = " Mins")
-          ) %>%
-          leaflet.extras2::stopSpinner()
+      # Change Units
+      if (input$iso_range_type == "distance") {
+        # To KM
+        range <- input$iso_range*1000
+      } else {
+        # To Sec
+        range <- input$iso_range*60
       }
 
-    shiny::observeEvent(input$apply_filter_acc, {
-
-      updateAcc()
-
+      addISO(
+        map_id = "index_map",
+        full_address = input$iso_location,
+        location = c(input$iso_lng, input$iso_lat),
+        range = range,
+        range_type = input$iso_range_type,
+        type = input$iso_type,
+        resource_params = list(
+          index_sf = shapefile_list$SF_CT,
+          index_sf_key = "GEOID",
+          resource_tbl = vax_provider,
+          resource_tbl_key = "Census_Tract",
+          resource_tbl_coords = c("longitude", "latitude")
+        ),
+        label = input$iso_label
+      )
     })
+
+    shiny::observe({
+
+      click <- input$index_map_click
+
+      shiny::updateNumericInput(
+        session = session,
+        inputId = "iso_lat",
+        value = click$lat
+      )
+
+      shiny::updateNumericInput(
+        session = session,
+        inputId = "iso_lng",
+        value = click$lng
+      )
+    })
+
+    shiny::observeEvent(input$iso_clear, {
+
+      leaflet::leafletProxy("index_map") %>%
+        leaflet.extras2::addSpinner() %>%
+        leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+        leaflet::clearGroup("Isochron") %>%
+        leaflet::clearGroup("ISO Resource - Vaccine Providers") %>%
+        leaflet::clearGroup("ISO Resource - POI") %>%
+        leaflet.extras2::stopSpinner()
+    })
+
+
+    # updateAcc <-
+    #   function() {
+    #
+    #     acc_data_filtered <- ACCESSIBILITY_DATA
+    #
+    #     if (!rlang::is_empty(input$filter_acc_type)) {
+    #
+    #       acc_data_filtered <-
+    #         acc_data_filtered %>%
+    #         dplyr::filter(.data$Business_type_condensed == input$filter_acc_type)
+    #     }
+    #
+    #     if (!rlang::is_empty(input$filter_transportation_method)) {
+    #
+    #       acc_data_filtered <-
+    #         acc_data_filtered %>%
+    #         dplyr::transmute(
+    #           .data$censustract,
+    #           .data$Business_type_condensed,
+    #           value = .data[[input$filter_transportation_method]],
+    #           value_fct = emthub::ACC_PARAM_LIST$case[[input$filter_transportation_method]](.data$value)
+    #         )
+    #     }
+    #
+    #     acc_data$value <- acc_data_filtered
+    #     acc_data$pal <-
+    #       leaflet::colorFactor(
+    #         palette = emthub::ACC_PARAM_LIST$color[[input$filter_transportation_method]],
+    #         # domain = factor(
+    #         #   emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]],
+    #         #   levels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]]
+    #         # ),
+    #         domain = emthub::ACC_PARAM_LIST$level_n[[input$filter_transportation_method]]
+    #         #levels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]],
+    #         #ordered = TRUE
+    #       )
+    #
+    #
+    #
+    #     leaflet::leafletProxy("index_map") %>%
+    #       leaflet.extras2::addSpinner() %>%
+    #       leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
+    #       leaflet::clearGroup(group = "Accessibility") %>%
+    #       leaflet::removeControl(layerId = "acc_legend") %>%
+    #       leaflet::addPolygons(
+    #         data = acc_data$value,
+    #         group = "Accessibility",
+    #         stroke = TRUE,
+    #         color = ~acc_data$pal(value_fct),
+    #         weight = 1,
+    #         #opacity = 0.8,
+    #         dashArray = "3",
+    #         fillOpacity = 0.8,
+    #         #options = leaflet::pathOptions(pane = "County_districts_polyline"),
+    #
+    #         label = ~ paste0(
+    #           "<b>", censustract, "</b>", "</br>", value, " mins"
+    #         ) %>% lapply(htmltools::HTML),
+    #
+    #         labelOptions = leaflet::labelOptions(
+    #           style = list(
+    #             "font-weight" = "normal",
+    #             padding = "3px 8px"
+    #           ),
+    #           textsize = "15px",
+    #           direction = "auto"
+    #         ),
+    #
+    #         highlight = leaflet::highlightOptions(
+    #           weight = 3,
+    #           fillOpacity = 0.1,
+    #           color = "black",
+    #           dashArray = "",
+    #           opacity = 0.5,
+    #           bringToFront = TRUE,
+    #           sendToBack = TRUE
+    #         ),
+    #
+    #         # TODO: Process Layer ID
+    #         layerId = ~paste0("acc_", censustract),
+    #         options = leaflet::pathOptions(pane = "layer_bottom")
+    #       ) %>%
+    #       leaflet::addLegend(
+    #         "bottomleft",
+    #         group = "Accessibility",
+    #         layerId = "acc_legend",
+    #         data = acc_data$value,
+    #         #pal = acc_data$pal,
+    #         colors = emthub::ACC_PARAM_LIST$color[[input$filter_transportation_method]],
+    #         values = ~value_fct,
+    #         title = emthub::ACC_PARAM_LIST$legend_title[[input$filter_transportation_method]],
+    #         opacity = 1,
+    #         labels = emthub::ACC_PARAM_LIST$level[[input$filter_transportation_method]]
+    #         #labFormat = leaflet::labelFormat(suffix = " Mins")
+    #       ) %>%
+    #       leaflet.extras2::stopSpinner()
+    #   }
+    #
+    # shiny::observeEvent(input$apply_filter_acc, {
+    #
+    #   updateAcc()
+    #
+    # })
 
     # > Places ----
     updateBusiness <-
@@ -704,6 +852,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         ) %>%
         leaflet::addTiles() %>%
         leaflet::addProviderTiles(leaflet::providers$Esri) %>%
+        leaflet::addProviderTiles(leaflet::providers$Esri, group = "Base Map") %>%
 
         leaflet::addMapPane("layer_top", zIndex=420) %>%
         leaflet::addMapPane("layer_bottom",zIndex=410) %>%
@@ -961,15 +1110,19 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
             "Disease Outcomes Rank Score",
             "Disease Outcomes Weighted Rank Score",
             "Poverty Rate",
-            "Accessibility",
-            "Infant Health Score"
+            #"Accessibility",
+            "Infant Health Score",
+            "Base Map"
           ),
           overlayGroups = c(
             "Business Location",
             "Zip Code",
             "Low income & Low food access (1-10 miles)",
             "Low income & Low food access (half-10 miles)",
-            "Low income & Low food access (1-20 miles)"
+            "Low income & Low food access (1-20 miles)",
+            "Isochron",
+            "ISO Resource - Vaccine Providers",
+            "ISO Resource - POI"
           ),
           position = "topleft"
         ) %>%
