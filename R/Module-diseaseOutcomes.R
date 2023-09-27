@@ -20,7 +20,8 @@ diseaseOutcomesUI <- function(id) {
             bslib::card_body(
               #min_height = 20,
               shiny::helpText(
-                "THIS TOOL ONLY WORKS FOR MAHONING COUNTY. ADDITIONAL COUNTIES WILL BE AVAILABLE SOON. PLEASE CHECK BACK LATER."
+                #"THIS TOOL ONLY WORKS FOR MAHONING COUNTY. ADDITIONAL COUNTIES WILL BE AVAILABLE SOON. PLEASE CHECK BACK LATER."
+                "THE INFORMATION BELOW IS SUBJECT TO CHANGE. PLEASE READ THE DOCUMENTATION ON THE DATA SOURCE PAGE AND WATCH THE TRAINING VIDEO BEFORE USING THE TABS AND FUNCTIONS BELOW."
               )
             )
           ),
@@ -51,7 +52,7 @@ diseaseOutcomesUI <- function(id) {
             # )
           ),
           bslib::nav_panel(
-            'Places',
+            'Place Finder',
 
             shiny::fluidRow(
               shiny::column(
@@ -59,7 +60,7 @@ diseaseOutcomesUI <- function(id) {
                 shiny::selectInput(
                   inputId = shiny::NS(id, "filter_type"),
                   label = "Type",
-                  choices = emthub::FILTER_TYPE_CHOICES,
+                  choices = emthub::EQUITY_MAP_FILTER_CHOICES$point_of_interest,
                   multiple = TRUE,
                   width = "100%"
                 )
@@ -69,7 +70,7 @@ diseaseOutcomesUI <- function(id) {
                 shiny::selectInput(
                   inputId = shiny::NS(id, "filter_city"),
                   label = "City",
-                  choices = emthub::FILTER_CITY_CHOICES,
+                  choices = emthub::EQUITY_MAP_FILTER_CHOICES$city,
                   multiple = TRUE,
                   width = "100%"
                 )
@@ -83,7 +84,7 @@ diseaseOutcomesUI <- function(id) {
                 shiny::selectInput(
                   inputId = shiny::NS(id, "filter_ct"),
                   label = "Census Tract",
-                  choices = emthub::FILTER_CT_CHOICES,
+                  choices = emthub::EQUITY_MAP_FILTER_CHOICES$ct,
                   multiple = TRUE,
                   width = "100%"
                 )
@@ -93,17 +94,17 @@ diseaseOutcomesUI <- function(id) {
                 shiny::selectInput(
                   inputId = shiny::NS(id, "filter_zip"),
                   label = "Zip",
-                  choices = emthub::FILTER_ZIP_CHOICES,
+                  choices = emthub::EQUITY_MAP_FILTER_CHOICES$zip,
                   multiple = TRUE,
                   width = "100%"
                 )
               )
             ),
 
-            reactable_searchBar(shiny::NS(id, "business_table"), placeholder = "Search for Place of Interest ..."),
-            reactable_csvDownloadButton(shiny::NS(id, "business_table"), filename = "poi_disease_outcomes.csv"),
+            reactable_searchBar(shiny::NS(id, "poi_table"), placeholder = "Search for Place of Interest ..."),
+            reactable_csvDownloadButton(shiny::NS(id, "poi_table"), filename = "poi_disease_outcomes.csv"),
             shiny::helpText("Toggle to add places to the map"),
-            reactable::reactableOutput(shiny::NS(id, "business_table"), inline = TRUE)
+            reactable::reactableOutput(shiny::NS(id, "poi_table"), inline = TRUE)
           ),
           bslib::nav_panel(
             title = "Access Tool",
@@ -284,7 +285,7 @@ diseaseOutcomesUI <- function(id) {
   )
 }
 
-diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_list) {
+diseaseOutcomesServer <- function(id, poi, ct_level_data_all, app_county, shapefile_list) {
 
   shiny::moduleServer(id, function(input, output, session){
 
@@ -333,9 +334,9 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     })
 
     # > Point Level
-    BUSINESS_LOCATION_DATA <- get_business_location(parquet = TRUE)
+    #BUSINESS_LOCATION_DATA <- get_business_location(parquet = TRUE)
 
-    business_data <-
+    poi_reactive <-
       shiny::reactiveValues(
         filtered = NULL
       )
@@ -543,17 +544,17 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     # })
 
     # > Places ----
-    updateBusiness <-
+    update_poi <-
       function () {
 
-        filtered <- BUSINESS_LOCATION_DATA
+        filtered <- poi
 
         if (!rlang::is_empty(input$filter_ct)) {
 
           filtered <-
             filtered %>%
             dplyr::filter(
-              .data$`Census Tract` %in% input$filter_ct
+              .data$census_tract %in% input$filter_ct
             )
         }
 
@@ -562,7 +563,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           filtered <-
             filtered %>%
             dplyr::filter(
-              .data$`Zip Code` %in% input$filter_zip
+              .data$zip %in% input$filter_zip
             )
         }
 
@@ -571,7 +572,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           filtered <-
             filtered %>%
             dplyr::filter(
-              .data$City %in% input$filter_city
+              .data$city %in% input$filter_city
             )
         }
 
@@ -580,20 +581,20 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
           filtered <-
             filtered %>%
             dplyr::filter(
-              .data$Business_Type %in% input$filter_type
+              .data$type %in% input$filter_type
             )
         }
 
         if (rlang::is_empty(input$filter_ct) && rlang::is_empty(input$filter_zip) &&
             rlang::is_empty(input$filter_city) && rlang::is_empty(input$filter_type)) {
-          business_data$filtered <- NULL
+          poi_reactive$filtered <- NULL
         } else {
-          business_data$filtered <- filtered
+          poi_reactive$filtered <- filtered
         }
       }
 
     shiny::observe({
-      updateBusiness()
+      update_poi()
     }) %>%
       shiny::bindEvent(
         input$filter_type,
@@ -855,7 +856,8 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         leaflet::addProviderTiles(leaflet::providers$Esri, group = "Base Map") %>%
 
         leaflet::addMapPane("layer_top", zIndex=420) %>%
-        leaflet::addMapPane("layer_bottom",zIndex=410) %>%
+        leaflet::addMapPane("layer_middle",zIndex=410) %>%
+        leaflet::addMapPane("layer_bottom",zIndex=400) %>%
 
         # ============================ #
         # > Disease Outcomes Rank ----
@@ -1115,7 +1117,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
             "Base Map"
           ),
           overlayGroups = c(
-            "Business Location",
+            "Place",
             "Zip Code",
             "Low income & Low food access (1-10 miles)",
             "Low income & Low food access (half-10 miles)",
@@ -1128,7 +1130,7 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         ) %>%
         leaflet::hideGroup(
           c(
-            #"Business Location",
+            #"Place",
             "Zip Code",
             "Low income & Low food access (1-10 miles)",
             "Low income & Low food access (half-10 miles)",
@@ -1219,18 +1221,19 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
     # =================== #
     # Business Table ----
 
-    output$business_table <- reactable::renderReactable({
-      shiny::req(!rlang::is_empty(business_data$filtered))
+    output$poi_table <- reactable::renderReactable({
+      shiny::req(!rlang::is_empty(poi_reactive$filtered))
 
-      business_data$filtered %>%
+      poi_reactive$filtered %>%
         dplyr::select(
-          .data$`Census Tract`,
-          `Type` = .data$Business_Type,
-          .data$Name,
-          .data$Address,
-          .data$City,
-          `Zip` = .data$`Zip Code`,
-          `Operational` = .data$operational_status
+          Name = .data$name,
+          Type = .data$type,
+          Hub = .data$hub,
+          City = .data$city,
+          County = .data$county,
+          Zip = .data$zip,
+          `Census Tract` = .data$census_tract,
+          Addr = .data$street_addr
         ) %>%
         dplyr::collect() %>%
         reactable::reactable(
@@ -1248,32 +1251,32 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         )
     })
 
-    selected_business_index <- shiny::reactive(reactable::getReactableState("business_table", "selected"))
-    selected_business <- shiny::reactiveValues(value = NULL)
+    selected_poi_index <- shiny::reactive(reactable::getReactableState("poi_table", "selected"))
+    selected_poi <- shiny::reactiveValues(value = NULL)
     shiny::observe({
 
-      if (!is.null(selected_business_index())) {
+      if (!is.null(selected_poi_index())) {
 
-        selected_business$value <-
-          business_data$filtered[selected_business_index(),] %>%
+        selected_poi$value <-
+          poi_reactive$filtered[selected_poi_index(),] %>%
           dplyr::collect()
 
 
       } else {
-        selected_business$value <- NULL
+        selected_poi$value <- NULL
       }
 
 
-      if (!rlang::is_empty(selected_business$value)) {
+      if (!rlang::is_empty(selected_poi$value)) {
 
         leaflet::leafletProxy("index_map") %>%
           leaflet.extras2::addSpinner() %>%
           leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
-          leaflet::clearGroup("Business Location") %>%
+          leaflet::clearGroup("Place") %>%
           leaflet::addMarkers(
-            data = selected_business$value,
-            group = "Business Location",
-            lng = ~Longitude, lat = ~Latitude,
+            data = selected_poi$value,
+            group = "Place",
+            lng = ~lng, lat = ~lat,
             popup = ~popup,
             labelOptions = leaflet::labelOptions(
               style = list(
@@ -1291,11 +1294,11 @@ diseaseOutcomesServer <- function(id, ct_level_data_all, app_county, shapefile_l
         leaflet::leafletProxy("index_map") %>%
           leaflet.extras2::addSpinner() %>%
           leaflet.extras2::startSpinner(options = list("lines" = 12, "length" = 30)) %>%
-          leaflet::clearGroup("Business Location") %>%
+          leaflet::clearGroup("Place") %>%
           leaflet.extras2::stopSpinner()
       }
 
-      #print(selected_business$value)
+      #print(selected_poi$value)
     })
 
 
