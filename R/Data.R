@@ -526,7 +526,8 @@ get_point_of_interest <- function(parquet = FALSE) {
       fs::path(
         emthub::ROOT,
         "Point Level Data",
-        "poi_for_ohio.parquet"
+        #"poi_for_ohio.parquet"
+        "poi_agg.parquet"
       ),
       as_data_frame = FALSE
     )
@@ -535,7 +536,8 @@ get_point_of_interest <- function(parquet = FALSE) {
       fs::path(
         emthub::ROOT,
         "Point Level Data",
-        "poi_for_ohio.csv"
+        #"poi_for_ohio.csv"
+        "poi_agg.csv"
       )
     )
   }
