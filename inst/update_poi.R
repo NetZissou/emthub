@@ -221,7 +221,7 @@ data_food_pantries_tidy <-
     lng = .data$lng,
     lat = .data$lat,
     hub = .data$hub,
-    coded_addr = urltools::url_encode(.data$full_address),
+    coded_addr = urltools::url_encode(paste0(.data$name, ", ", .data$full_address)),
     popup = paste(sep = "",
                   glue::glue(
                     "
@@ -287,6 +287,7 @@ data_food_pantries_tidy <-
                     "<a href='https://www.google.com/maps/search/?api=1&query={coded_addr}' target='_blank'>Open in Google Maps</a>",
                     coded_addr = .data$coded_addr
                   ),
+                  "<br/>",
                   # Additional Description
                   ifelse(
                     is.na(.data$description),
@@ -366,7 +367,10 @@ poi_agg <-
     poi_relink,
     poi_food_pantries
   ) %>%
-  dplyr::select(-.data$state)
+  dplyr::select(-.data$state) %>%
+  dplyr::mutate(
+    type = stringr::str_to_title(.data$type)
+  )
 
 
 
@@ -387,23 +391,6 @@ poi_agg %>%
       "poi_agg.parquet"
     )
   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

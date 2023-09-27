@@ -1,7 +1,7 @@
 ## code to prepare `EQUITY_MAP_FILTER_CHOICES` dataset goes here
 
 SF_HUB <- get_sf_hub()
-SF_ZIP <- get_sf_zip()
+SF_ZIP <- get_sf_zip(T)
 SF_CT <- get_sf_ct()
 SF_COUNTY <- get_sf_county()
 
@@ -22,7 +22,7 @@ names(CHOICES_VAX_TYPE) <- c(
 CHOICES_VAX_CITY <- sort(unique(vax_provider$City))
 
 CHOICES_POINT_OF_INTEREST <-
-  sort(unique(get_point_of_interest()$Type))
+  sort(unique(get_point_of_interest()$type))
 names(CHOICES_POINT_OF_INTEREST) <- stringr::str_to_title(
   CHOICES_POINT_OF_INTEREST
 )
