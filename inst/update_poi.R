@@ -221,7 +221,7 @@ data_food_pantries_tidy <-
     lng = .data$lng,
     lat = .data$lat,
     hub = .data$hub,
-    coded_addr = urltools::url_encode(paste0(.data$name, ", ", .data$full_address)),
+    coded_addr = urltools::url_encode(.data$full_address),
     popup = paste(sep = "",
                   glue::glue(
                     "
@@ -369,7 +369,8 @@ poi_agg <-
   ) %>%
   dplyr::select(-.data$state) %>%
   dplyr::mutate(
-    type = stringr::str_to_title(.data$type)
+    type = stringr::str_to_title(.data$type),
+    city = stringr::str_to_title(.data$city)
   )
 
 
@@ -391,6 +392,7 @@ poi_agg %>%
       "poi_agg.parquet"
     )
   )
+
 
 
 
