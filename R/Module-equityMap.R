@@ -150,6 +150,28 @@ equityMapUI <- function(id) {
             )
           ),
 
+          shiny::fluidRow(
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_poi_city"),
+                label = "City",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$city,
+                multiple = TRUE
+              )
+            ),
+
+            shiny::column(
+              width = 6,
+              shiny::selectInput(
+                shiny::NS(id, "selection_poi_zip"),
+                label = "Zip",
+                choices = emthub::EQUITY_MAP_FILTER_CHOICES$zip,
+                multiple = TRUE
+              )
+            )
+          ),
+
           reactable_searchBar(shiny::NS(id, "poi_table"), placeholder = "Search for Place of Interest ..."),
           reactable_csvDownloadButton(shiny::NS(id, "poi_table"), filename = "poi.csv"),
           shiny::helpText("Toggle to add places to the map. If you do not see the table below please click the expand button in the bottom-right corner."),
@@ -252,7 +274,7 @@ equityMapUI <- function(id) {
 
 }
 
-equityMapServer <- function(id, ct_level_data, shapefile_list) {
+equityMapServer <- function(id, poi, ct_level_data, shapefile_list) {
 
   shiny::moduleServer(id, function(input, output, session){
 
@@ -265,7 +287,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     vax_provider_reactive <- shiny::reactiveValues(
       filtered = NULL
     )
-    poi <- get_point_of_interest(parquet = TRUE)
+    #poi <- get_point_of_interest(parquet = TRUE)
     poi_reactive <- shiny::reactiveValues(
       filtered = NULL
     )
@@ -431,16 +453,16 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       }
     }
 
-    update_poi <- function(type, hubs) {
+    update_poi <- function(types, hubs, cities, zips) {
 
       filtered <- poi
 
-      if (!rlang::is_empty(type)) {
+      if (!rlang::is_empty(types)) {
 
         filtered <-
           filtered %>%
           dplyr::filter(
-            .data$Type %in% type
+            .data$type %in% types
           )
       }
 
@@ -453,7 +475,27 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           )
       }
 
-      if (rlang::is_empty(type) && rlang::is_empty(hubs)) {
+      if (!rlang::is_empty(cities)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$city %in% cities
+          )
+      }
+
+      if (!rlang::is_empty(zips)) {
+
+        filtered <-
+          filtered %>%
+          dplyr::filter(
+            .data$zip %in% zips
+          )
+      }
+
+      if (
+        rlang::is_empty(types) && rlang::is_empty(hubs) && rlang::is_empty(cities) && rlang::is_empty(zips)
+      ) {
         poi_reactive$filtered <- NULL
       } else {
         poi_reactive$filtered <- filtered
@@ -961,7 +1003,9 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
     shiny::observe({
       update_poi(
         input$selection_poi_type,
-        input$selection_poi_hub
+        input$selection_poi_hub,
+        input$selection_poi_city,
+        input$selection_poi_zip
       )
     })
 
@@ -985,7 +1029,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
           Address = .data$Address,
           City = .data$City,
           County = .data$County,
-          State = .data$State,
+          #State = .data$State,
           Zip = .data$Zip,
           `Census Tract` = .data$Census_Tract
         ) %>%
@@ -1076,15 +1120,14 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
       poi_reactive$filtered %>%
         #dplyr::arrange(.data$Company) %>%
         dplyr::select(
-          Name = .data$Company,
-          Type = .data$Type,
+          Name = .data$name,
+          Type = .data$type,
           Hub = .data$hub,
-          City = .data$City,
+          City = .data$city,
           County = .data$county,
-          State = .data$State,
-          Zip = .data$Zipcode,
+          Zip = .data$zip,
           `Census Tract` = .data$census_tract,
-          Addr = .data$`Address Line 1`
+          Addr = .data$street_addr
         ) %>%
         dplyr::collect() %>%
         reactable::reactable(
@@ -1131,7 +1174,7 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             leaflet::addAwesomeMarkers(
               data = selected_poi$value,
               group = "Point of Interest",
-              lng = ~Longitude, lat = ~Latitude,
+              lng = ~lng, lat = ~lat,
               icon = leaflet::makeAwesomeIcon(
                 text = fontawesome::fa("location-crosshairs"),
                 iconColor = 'white',
@@ -1331,35 +1374,6 @@ equityMapServer <- function(id, ct_level_data, shapefile_list) {
             "Hub Service Area"
           )
         ) %>%
-        # leaflet::addEasyButton(leaflet::easyButton(
-        #   position = "bottomleft",
-        #   states = list(
-        #     leaflet::easyButtonState(
-        #       stateName="unfrozen-markers",
-        #       icon="ion-toggle",
-        #       title="Freeze Clusters",
-        #       onClick = leaflet::JS("
-        #   function(btn, map) {
-        #     var clusterManager =
-        #       map.layerManager.getLayer('cluster', 'vaxCluster');
-        #     clusterManager.freezeAtZoom();
-        #     btn.state('frozen-markers');
-        #   }")
-        #     ),
-        #     leaflet::easyButtonState(
-        #       stateName="frozen-markers",
-        #       icon="ion-toggle-filled",
-        #       title="UnFreeze Clusters",
-        #       onClick = leaflet::JS("
-        #   function(btn, map) {
-        #     var clusterManager =
-        #       map.layerManager.getLayer('cluster', 'vaxCluster');
-        #     clusterManager.unfreeze();
-        #     btn.state('unfrozen-markers');
-        #   }")
-        #     )
-        #   )
-        # )) %>%
         leaflet.extras2::addEasyprint(
           options = leaflet.extras2::easyprintOptions(
             title = 'Print Map',
